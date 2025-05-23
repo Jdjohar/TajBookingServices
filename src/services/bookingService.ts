@@ -1,6 +1,6 @@
 import { BookingFormData, Booking } from '../types';
 
-const API_URL = 'https://tajbookingservices.onrender.com/api/bookings';
+const API_URL = '/api/bookings';
 
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
@@ -11,7 +11,8 @@ const handleResponse = async (response: Response) => {
         throw new Error(errorData.message || `Request failed with status: ${response.status}`);
       }
       const textError = await response.text();
-      throw new Error(textError || `HTTP error! status: ${response.status}`);
+      console.error('Server response:', textError); // Log the actual response for debugging
+      throw new Error(`Invalid server response. Status: ${response.status}`);
     } catch (error) {
       if (error instanceof Error) throw error;
       throw new Error(`Request failed with status: ${response.status}`);
@@ -23,8 +24,11 @@ const handleResponse = async (response: Response) => {
     if (contentType && contentType.includes('application/json')) {
       return await response.json();
     }
+    const textResponse = await response.text();
+    console.error('Unexpected response format:', textResponse); // Log non-JSON responses
     throw new Error('Invalid response format from server');
   } catch (error) {
+    console.error('Response parsing error:', error);
     throw new Error('Failed to parse server response');
   }
 };
@@ -53,11 +57,6 @@ export const createBooking = async (bookingData: BookingFormData): Promise<Booki
       body: JSON.stringify(formattedData),
     });
     
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to create booking' }));
-      throw new Error(errorData.message || 'Failed to create booking');
-    }
-
     return handleResponse(response);
   } catch (error) {
     console.error('Booking creation error:', error);
