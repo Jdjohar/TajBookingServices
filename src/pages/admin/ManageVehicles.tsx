@@ -18,10 +18,13 @@ const ManageVehicles = () => {
   const loadVehicles = async () => {
     try {
       const data = await fetchVehicles();
-      setVehicles(data);
+      // Ensure data is an array before setting it to state
+      setVehicles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading vehicles:', error);
       toast.error('Failed to load vehicles');
+      // Set empty array on error to prevent filter issues
+      setVehicles([]);
     } finally {
       setIsLoading(false);
     }
