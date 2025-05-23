@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Vehicle } from '../types';
 
-const API_URL = '/api/vehicles';
+const API_URL = 'https://tajbookingservices.onrender.com/api/vehicles';
 
 export const fetchVehicles = async (): Promise<Vehicle[]> => {
   try {
