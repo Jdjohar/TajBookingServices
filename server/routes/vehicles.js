@@ -1,4 +1,11 @@
 import express from 'express';
+import {
+  getVehicles,
+  getVehicle,
+  createVehicle,
+  updateVehicle,
+  deleteVehicle
+} from '../controllers/vehicleController.js';
 import authenticateUser from '../middleware/authentication.js';
 import authorize from '../middleware/authorize.js';
 

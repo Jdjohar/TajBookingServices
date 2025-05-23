@@ -1,4 +1,11 @@
 import express from 'express';
+import {
+  getLocations,
+  getLocation,
+  createLocation,
+  updateLocation,
+  deleteLocation
+} from '../controllers/locationController.js';
 import authenticateUser from '../middleware/authentication.js';
 import authorize from '../middleware/authorize.js';
 
