@@ -2,17 +2,6 @@ import { BookingFormData, Booking } from '../types';
 
 const API_URL = 'https://tajbookingservices.onrender.com/api/bookings';
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('Authentication token not found');
-  }
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  };
-};
-
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
     const contentType = response.headers.get('content-type');
@@ -50,10 +39,11 @@ export const createBooking = async (bookingData: BookingFormData): Promise<Booki
       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
-    const headers = getAuthHeaders();
     const response = await fetch(API_URL, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(bookingData),
     });
     
@@ -65,6 +55,18 @@ export const createBooking = async (bookingData: BookingFormData): Promise<Booki
     }
     throw new Error('Failed to create booking: Unknown error occurred');
   }
+};
+
+// For authenticated endpoints, we'll use the auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
 };
 
 export const getBookingById = async (id: string): Promise<Booking> => {
