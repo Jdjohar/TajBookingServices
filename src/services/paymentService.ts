@@ -42,6 +42,9 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
       name: bookingData.name,
     });
 
+    // Create a descriptive string for the booking
+    const bookingDescription = `Airport transfer from ${bookingData.pickupLocationId} to ${bookingData.dropoffLocationId} on ${bookingData.pickupDate.toLocaleDateString()} at ${bookingData.pickupTime} for ${bookingData.name}`;
+
     const response = await fetch(`${API_URL}/stripe/create-payment-intent`, {
       method: 'POST',
       headers: {
@@ -52,7 +55,7 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
         currency: 'inr',
         customer: customer.id,
         bookingId: bookingData.bookingId,
-        description: `Airport transfer service - ${bookingData.name}`,
+        description: bookingDescription, // Added required description
         statement_descriptor: 'AIRPORT TRANSFER',
         metadata: {
           booking_id: bookingData.bookingId,
@@ -108,7 +111,7 @@ export const handlePayment = async (bookingData: BookingFormData) => {
 
     const booking = await bookingResponse.json();
 
-    // Create payment intent
+    // Create payment intent with description
     const { clientSecret } = await createPaymentIntent({
       ...bookingData,
       bookingId: booking._id,
