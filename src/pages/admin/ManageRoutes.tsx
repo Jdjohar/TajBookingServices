@@ -22,11 +22,13 @@ const ManageRoutes = () => {
         fetchRoutes(),
         fetchLocations(),
       ]);
-      setRoutes(routesData);
-      setLocations(locationsData);
+      setRoutes(Array.isArray(routesData) ? routesData : []);
+      setLocations(Array.isArray(locationsData) ? locationsData : []);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load routes data');
+      setRoutes([]);
+      setLocations([]);
     } finally {
       setIsLoading(false);
     }
@@ -35,7 +37,7 @@ const ManageRoutes = () => {
   const handleCreateRoute = async (formData: any) => {
     try {
       const newRoute = await createRoute(formData);
-      setRoutes([...routes, newRoute]);
+      setRoutes(prevRoutes => [...prevRoutes, newRoute]);
       toast.success('Route created successfully');
       setIsModalOpen(false);
     } catch (error) {
@@ -47,7 +49,7 @@ const ManageRoutes = () => {
   const handleUpdateRoute = async (id: string, formData: any) => {
     try {
       const updatedRoute = await updateRoute(id, formData);
-      setRoutes(routes.map(route => route._id === id ? updatedRoute : route));
+      setRoutes(prevRoutes => prevRoutes.map(route => route._id === id ? updatedRoute : route));
       toast.success('Route updated successfully');
       setIsModalOpen(false);
       setEditingRoute(null);
@@ -61,7 +63,7 @@ const ManageRoutes = () => {
     if (window.confirm('Are you sure you want to delete this route?')) {
       try {
         await deleteRoute(id);
-        setRoutes(routes.filter(route => route._id !== id));
+        setRoutes(prevRoutes => prevRoutes.filter(route => route._id !== id));
         toast.success('Route deleted successfully');
       } catch (error) {
         console.error('Error deleting route:', error);
