@@ -133,10 +133,11 @@ const ManageRoutes = () => {
     setIsModalOpen(true);
   };
 
-  const filteredRoutes = routes.filter(route =>
-    route.pickupLocation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    route.dropoffLocation.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+const filteredRoutes = routes.filter(route => {
+  const pickupName = route.pickupLocation?.name?.toLowerCase() || '';
+  const dropoffName = route.dropoffLocation?.name?.toLowerCase() || '';
+  return pickupName.includes(searchTerm.toLowerCase()) || dropoffName.includes(searchTerm.toLowerCase());
+});
 
   if (isLoading) {
     return (
