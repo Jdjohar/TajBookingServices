@@ -49,18 +49,16 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
       },
       body: JSON.stringify({
         amount: bookingData.totalPrice,
-        currency: 'inr', // Changed to INR for Indian transactions
+        currency: 'inr',
         customer: customer.id,
         bookingId: bookingData.bookingId,
-        description: `Airport transfer service from ${bookingData.pickupLocationId} to ${bookingData.dropoffLocationId}`, // Added description
-        statement_descriptor: 'AIRPORT TRANSFER', // Added statement descriptor
+        description: `Airport transfer service - ${bookingData.name}`,
+        statement_descriptor: 'AIRPORT TRANSFER',
         metadata: {
           booking_id: bookingData.bookingId,
           customer_name: bookingData.name,
           customer_email: bookingData.email,
-          pickup_location: bookingData.pickupLocationId,
-          dropoff_location: bookingData.dropoffLocationId,
-          pickup_date: new Date(bookingData.pickupDate).toISOString(),
+          pickup_date: bookingData.pickupDate.toISOString(),
           pickup_time: bookingData.pickupTime,
         },
       }),
@@ -80,28 +78,27 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
 
 export const handlePayment = async (bookingData: BookingFormData) => {
   try {
-    // Format the booking data to match backend expectations
-    const formattedBookingData = {
-      customer: {
-        name: bookingData.name,
-        email: bookingData.email,
-        phone: bookingData.phone,
-      },
-      route: bookingData.pickupLocationId,
-      vehicle: bookingData.vehicleId,
-      pickupDate: new Date(bookingData.pickupDate).toISOString().split('T')[0],
-      pickupTime: bookingData.pickupTime,
-      totalPrice: bookingData.totalPrice,
-      notes: bookingData.notes,
-    };
-
     // Create booking first
     const bookingResponse = await fetch(`${API_URL}/bookings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formattedBookingData),
+      body: JSON.stringify({
+        customer: {
+          name: bookingData.name,
+          email: bookingData.email,
+          phone: bookingData.phone,
+        },
+        route: bookingData.pickupLocationId,
+        vehicle: bookingData.vehicleId,
+        pickupDate: bookingData.pickupDate.toISOString().split('T')[0],
+        pickupTime: bookingData.pickupTime,
+        totalPrice: bookingData.totalPrice,
+        notes: bookingData.notes || '',
+        status: 'pending',
+        paymentStatus: 'pending',
+      }),
     });
 
     if (!bookingResponse.ok) {
@@ -111,7 +108,7 @@ export const handlePayment = async (bookingData: BookingFormData) => {
 
     const booking = await bookingResponse.json();
 
-    // Create payment intent with customer
+    // Create payment intent
     const { clientSecret } = await createPaymentIntent({
       ...bookingData,
       bookingId: booking._id,
