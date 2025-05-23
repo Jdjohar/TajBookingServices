@@ -66,6 +66,8 @@ export interface BookingFormData {
   email: string;
   phone: string;
   notes?: string;
+  totalPrice?: number;
+  bookingId?: string;
 }
 
 export interface AuthState {
