@@ -69,8 +69,6 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
 
 export const handlePayment = async (bookingData: BookingFormData) => {
   try {
-    console.log("handlePayment start");
-    
     // Create booking first
     const bookingResponse = await fetch(`${API_URL}/bookings`, {
       method: 'POST',
@@ -80,17 +78,12 @@ export const handlePayment = async (bookingData: BookingFormData) => {
       body: JSON.stringify(bookingData),
     });
 
-    console.log("handlePayment 1");
-
     if (!bookingResponse.ok) {
       const errorData = await bookingResponse.json();
       throw new Error(errorData.message || 'Failed to create booking');
     }
 
-    console.log("handlePayment 2");
-
     const booking = await bookingResponse.json();
-    console.log(booking, "handlePayment 3");
 
     // Create payment intent with customer
     const { clientSecret } = await createPaymentIntent({
@@ -98,48 +91,9 @@ export const handlePayment = async (bookingData: BookingFormData) => {
       bookingId: booking._id,
     });
 
-    // Load Stripe
-    const stripe = await getStripe();
-    if (!stripe) {
-      throw new Error('Stripe failed to load');
-    }
-
-    // Confirm payment
-    const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: {
-          number: '4242424242424242', // Test card number
-          exp_month: 12,
-          exp_year: 2024,
-          cvc: '123',
-        },
-      },
-    });
-
-    if (paymentError) {
-      throw new Error(paymentError.message);
-    }
-
-    // Update booking with payment information
-    const updateResponse = await fetch(`${API_URL}/bookings/${booking._id}/payment`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        paymentIntentId: paymentIntent.id,
-        paymentStatus: paymentIntent.status,
-      }),
-    });
-
-    if (!updateResponse.ok) {
-      const errorData = await updateResponse.json();
-      throw new Error(errorData.message || 'Failed to update booking payment status');
-    }
-
     return {
-      booking: await updateResponse.json(),
-      paymentIntent,
+      booking,
+      clientSecret,
     };
   } catch (error) {
     console.error('Payment handling error:', error);

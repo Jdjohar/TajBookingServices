@@ -5,12 +5,39 @@ import DatePicker from 'react-datepicker';
 import { addDays, format, isAfter } from 'date-fns';
 import { toast } from 'react-toastify';
 import { Calendar, Clock, MapPin, Car, User, Mail, Phone, FileText } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
 import { BookingFormData, Route, Vehicle, Location } from '../../types';
 import { handlePayment } from '../../services/paymentService';
 import { fetchLocations, fetchRoutes } from '../../services/routeService';
 import { fetchVehicles } from '../../services/vehicleService';
 
-const BookingForm = () => {
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      color: '#32325d',
+      fontFamily: '"Inter", sans-serif',
+      fontSmoothing: 'antialiased',
+      fontSize: '16px',
+      '::placeholder': {
+        color: '#aab7c4'
+      }
+    },
+    invalid: {
+      color: '#fa755a',
+      iconColor: '#fa755a'
+    }
+  }
+};
+
+const BookingFormContent = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [routes, setRoutes] = useState<Route[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -21,6 +48,8 @@ const BookingForm = () => {
   const [price, setPrice] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const stripe = useStripe();
+  const elements = useElements();
 
   const {
     register,
@@ -101,6 +130,11 @@ const BookingForm = () => {
   }, [selectedRoute, vehicleId, vehicles]);
 
   const onSubmit = async (data: BookingFormData) => {
+    if (!stripe || !elements) {
+      toast.error('Stripe has not been initialized');
+      return;
+    }
+
     if (!price || !selectedRoute || !selectedVehicle) {
       toast.error('Please complete all selections to see price');
       return;
@@ -109,29 +143,37 @@ const BookingForm = () => {
     setIsLoading(true);
 
     try {
-      // Format the booking data
-      const bookingData = {
-        customer: {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-        },
-        route: selectedRoute._id,
-        vehicle: selectedVehicle._id,
-        pickupDate: format(data.pickupDate, 'yyyy-MM-dd'),
-        pickupTime: data.pickupTime,
+      const { booking, clientSecret } = await handlePayment({
+        ...data,
         totalPrice: price,
-        notes: data.notes,
-      };
+      });
 
-      const { booking } = await handlePayment(bookingData);
-      
-      if (!booking || !booking._id) {
-        throw new Error('Invalid booking response received');
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        throw new Error('Card element not found');
       }
 
-      navigate(`/booking/confirmation/${booking._id}`);
-      toast.success('Booking confirmed and payment processed successfully!');
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: data.name,
+              email: data.email,
+            },
+          },
+        }
+      );
+
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
+
+      if (paymentIntent.status === 'succeeded') {
+        navigate(`/booking/confirmation/${booking._id}`);
+        toast.success('Booking confirmed and payment processed successfully!');
+      }
     } catch (error) {
       console.error('Form submission error:', error);
       const errorMessage = error instanceof Error 
@@ -370,6 +412,14 @@ const BookingForm = () => {
           </div>
         </div>
 
+        {/* Payment Information */}
+        <div className="rounded-lg bg-gray-50 p-6">
+          <h3 className="mb-4 font-heading text-xl font-semibold text-gray-800">Payment Information</h3>
+          <div className="mb-6">
+            <CardElement options={CARD_ELEMENT_OPTIONS} className="p-3 bg-white rounded-lg border border-gray-300" />
+          </div>
+        </div>
+
         {/* Price and Submit */}
         <div className="rounded-lg bg-primary-50 p-6">
           <div className="mb-6 flex items-center justify-between">
@@ -383,7 +433,7 @@ const BookingForm = () => {
           
           <button
             type="submit"
-            disabled={isLoading || !price}
+            disabled={isLoading || !price || !stripe}
             className="w-full rounded-lg bg-primary-500 py-4 text-center font-semibold text-white transition-colors hover:bg-primary-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {isLoading ? (
@@ -392,16 +442,24 @@ const BookingForm = () => {
                 Processing...
               </span>
             ) : (
-              'Proceed to Payment'
+              'Complete Booking'
             )}
           </button>
           
           <p className="mt-4 text-center text-sm text-gray-600">
-            By clicking "Proceed to Payment", you agree to our Terms of Service and Privacy Policy.
+            By clicking "Complete Booking", you agree to our Terms of Service and Privacy Policy.
           </p>
         </div>
       </form>
     </div>
+  );
+};
+
+const BookingForm = () => {
+  return (
+    <Elements stripe={stripePromise}>
+      <BookingFormContent />
+    </Elements>
   );
 };
 
