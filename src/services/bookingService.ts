@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { BookingFormData, Booking } from '../types';
 
-const API_URL = '/api/bookings';
+const API_URL = 'https://tajbookingservices.onrender.com/api/bookings';
 
 export const createBooking = async (bookingData: BookingFormData): Promise<Booking> => {
   try {
