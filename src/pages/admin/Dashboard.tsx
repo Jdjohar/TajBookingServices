@@ -1,4 +1,25 @@
-e-500">
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Users, ArrowUp, ArrowRight, MapPin, Car } from 'lucide-react';
+
+// Define default display stats to prevent undefined errors
+const defaultDisplayStats = {
+  recentBookings: [],
+  topRoutes: [],
+  monthlyRevenue: [],
+};
+
+const Dashboard = () => {
+  // Initialize displayStats with default values
+  const displayStats = defaultDisplayStats;
+
+  return (
+    <div className="p-6">
+      {/* Stats Overview */}
+      <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <div className="flex items-center">
+            <div className="mr-4 rounded-full bg-primary-50 p-3 text-primary-500">
               <Users size={24} />
             </div>
             <div>
@@ -51,7 +72,7 @@ e-500">
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {displayStats.recentBookings.map((booking) => (
+                {displayStats.recentBookings && displayStats.recentBookings.map((booking) => (
                   <tr key={booking._id}>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="text-sm font-medium text-gray-900">{booking.customer.name}</div>
@@ -84,6 +105,13 @@ e-500">
                     </td>
                   </tr>
                 ))}
+                {(!displayStats.recentBookings || displayStats.recentBookings.length === 0) && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                      No recent bookings found
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -101,7 +129,7 @@ e-500">
             </Link>
           </div>
           <div className="space-y-4">
-            {displayStats.topRoutes.map((route, index) => (
+            {displayStats.topRoutes && displayStats.topRoutes.map((route, index) => (
               <div key={route._id} className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-500">
@@ -115,6 +143,11 @@ e-500">
                 <div className="text-sm font-medium text-gray-900">#{index + 1}</div>
               </div>
             ))}
+            {(!displayStats.topRoutes || displayStats.topRoutes.length === 0) && (
+              <div className="py-8 text-center text-gray-500">
+                No top routes available
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -125,7 +158,7 @@ e-500">
           <h2 className="mb-6 text-lg font-semibold text-gray-900">Monthly Revenue</h2>
           <div className="h-64">
             <div className="flex h-full items-end">
-              {displayStats.monthlyRevenue.map((item, index) => (
+              {displayStats.monthlyRevenue && displayStats.monthlyRevenue.map((item, index) => (
                 <div key={index} className="flex flex-1 flex-col items-center">
                   <div
                     className="w-full bg-primary-500"
@@ -136,6 +169,11 @@ e-500">
                   <div className="mt-2 text-xs font-medium text-gray-600">{item.month}</div>
                 </div>
               ))}
+              {(!displayStats.monthlyRevenue || displayStats.monthlyRevenue.length === 0) && (
+                <div className="flex w-full items-center justify-center py-8 text-gray-500">
+                  No revenue data available
+                </div>
+              )}
             </div>
           </div>
         </div>
