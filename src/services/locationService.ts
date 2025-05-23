@@ -2,8 +2,18 @@ import { Location } from '../types';
 
 const API_URL = 'https://tajbookingservices.onrender.com/api/locations';
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
+};
+
 export const fetchLocations = async (): Promise<Location[]> => {
-  const response = await fetch(API_URL);
+  const response = await fetch(API_URL, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: response.statusText }));
     throw new Error(errorData.message || 'Failed to fetch locations');
@@ -14,9 +24,7 @@ export const fetchLocations = async (): Promise<Location[]> => {
 export const createLocation = async (locationData: Omit<Location, '_id'>): Promise<Location> => {
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(locationData),
   });
   
@@ -31,9 +39,7 @@ export const createLocation = async (locationData: Omit<Location, '_id'>): Promi
 export const updateLocation = async (id: string, locationData: Partial<Location>): Promise<Location> => {
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(locationData),
   });
   
@@ -48,6 +54,7 @@ export const updateLocation = async (id: string, locationData: Partial<Location>
 export const deleteLocation = async (id: string): Promise<void> => {
   const response = await fetch(`${API_URL}/${id}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
   
   if (!response.ok) {
