@@ -8,6 +8,6 @@ export const config = {
     lifetime: process.env.JWT_LIFETIME || '30d'
   },
   mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/airporttransfers'
+    uri: process.env.MONGODB_URI || 'mongodb+srv://eshajdwebservices:jdweb123@cluster0.evzfn2i.mongodb.net/tajbookingservices?retryWrites=true&w=majority'
   }
 };
