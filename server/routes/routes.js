@@ -1,6 +1,13 @@
 import express from 'express';
 import authenticateUser from '../middleware/authentication.js';
 import authorize from '../middleware/authorize.js';
+import { 
+  getRoutes, 
+  getRoute, 
+  createRoute, 
+  updateRoute, 
+  deleteRoute 
+} from '../controllers/routeController.js';
 
 const router = express.Router();
 
