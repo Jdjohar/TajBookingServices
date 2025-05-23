@@ -42,8 +42,8 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
       name: bookingData.name,
     });
 
-    // Create a descriptive string for the booking
-    const bookingDescription = `Airport transfer from ${bookingData.pickupLocationId} to ${bookingData.dropoffLocationId} on ${bookingData.pickupDate.toLocaleDateString()} at ${bookingData.pickupTime} for ${bookingData.name}`;
+    // Create a detailed description for the payment intent
+    const bookingDescription = `Private airport transfer service - From: ${bookingData.pickupLocationId} To: ${bookingData.dropoffLocationId} - Date: ${bookingData.pickupDate.toLocaleDateString()} Time: ${bookingData.pickupTime} - Customer: ${bookingData.name} (${bookingData.email})`;
 
     const response = await fetch(`${API_URL}/stripe/create-payment-intent`, {
       method: 'POST',
@@ -51,11 +51,11 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: bookingData.totalPrice,
+        amount: Math.round(bookingData.totalPrice || 0 * 100), // Convert to cents
         currency: 'inr',
         customer: customer.id,
         bookingId: bookingData.bookingId,
-        description: bookingDescription, // Added required description
+        description: bookingDescription,
         statement_descriptor: 'AIRPORT TRANSFER',
         metadata: {
           booking_id: bookingData.bookingId,
@@ -63,6 +63,8 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
           customer_email: bookingData.email,
           pickup_date: bookingData.pickupDate.toISOString(),
           pickup_time: bookingData.pickupTime,
+          pickup_location: bookingData.pickupLocationId,
+          dropoff_location: bookingData.dropoffLocationId,
         },
       }),
     });
@@ -111,7 +113,7 @@ export const handlePayment = async (bookingData: BookingFormData) => {
 
     const booking = await bookingResponse.json();
 
-    // Create payment intent with description
+    // Create payment intent with detailed description
     const { clientSecret } = await createPaymentIntent({
       ...bookingData,
       bookingId: booking._id,
