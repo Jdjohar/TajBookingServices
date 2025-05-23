@@ -18,10 +18,11 @@ const ManageBookings = () => {
   const loadBookings = async () => {
     try {
       const data = await getAllBookings();
-      setBookings(data);
+      setBookings(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading bookings:', error);
       toast.error('Failed to load bookings');
+      setBookings([]);
     } finally {
       setIsLoading(false);
     }
@@ -249,6 +250,12 @@ const ManageBookings = () => {
             </div>
           </div>
         ))}
+
+        {filteredBookings.length === 0 && (
+          <div className="rounded-lg bg-white p-8 text-center shadow-md">
+            <p className="text-gray-500">No bookings found matching your criteria</p>
+          </div>
+        )}
       </div>
     </div>
   );

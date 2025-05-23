@@ -10,6 +10,12 @@ const ManageVehicles = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    capacity: '',
+    image: '',
+  });
 
   useEffect(() => {
     loadVehicles();
@@ -18,40 +24,44 @@ const ManageVehicles = () => {
   const loadVehicles = async () => {
     try {
       const data = await fetchVehicles();
-      // Ensure data is an array before setting it to state
       setVehicles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading vehicles:', error);
       toast.error('Failed to load vehicles');
-      // Set empty array on error to prevent filter issues
       setVehicles([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateVehicle = async (formData: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
-      const newVehicle = await createVehicle(formData);
-      setVehicles([...vehicles, newVehicle]);
-      toast.success('Vehicle created successfully');
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error creating vehicle:', error);
-      toast.error('Failed to create vehicle');
-    }
-  };
+      const vehicleData = {
+        name: formData.name,
+        description: formData.description,
+        capacity: Number(formData.capacity),
+        image: formData.image || 'https://via.placeholder.com/150',
+      };
 
-  const handleUpdateVehicle = async (id: string, formData: any) => {
-    try {
-      const updatedVehicle = await updateVehicle(id, formData);
-      setVehicles(vehicles.map(vehicle => vehicle._id === id ? updatedVehicle : vehicle));
-      toast.success('Vehicle updated successfully');
+      if (editingVehicle) {
+        const updatedVehicle = await updateVehicle(editingVehicle._id, vehicleData);
+        setVehicles(prevVehicles => prevVehicles.map(vehicle => 
+          vehicle._id === editingVehicle._id ? updatedVehicle : vehicle
+        ));
+        toast.success('Vehicle updated successfully');
+      } else {
+        const newVehicle = await createVehicle(vehicleData);
+        setVehicles(prevVehicles => [...prevVehicles, newVehicle]);
+        toast.success('Vehicle created successfully');
+      }
+      
       setIsModalOpen(false);
-      setEditingVehicle(null);
+      resetForm();
     } catch (error) {
-      console.error('Error updating vehicle:', error);
-      toast.error('Failed to update vehicle');
+      console.error('Error saving vehicle:', error);
+      toast.error('Failed to save vehicle');
     }
   };
 
@@ -59,13 +69,34 @@ const ManageVehicles = () => {
     if (window.confirm('Are you sure you want to delete this vehicle?')) {
       try {
         await deleteVehicle(id);
-        setVehicles(vehicles.filter(vehicle => vehicle._id !== id));
+        setVehicles(prevVehicles => prevVehicles.filter(vehicle => vehicle._id !== id));
         toast.success('Vehicle deleted successfully');
       } catch (error) {
         console.error('Error deleting vehicle:', error);
         toast.error('Failed to delete vehicle');
       }
     }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      capacity: '',
+      image: '',
+    });
+    setEditingVehicle(null);
+  };
+
+  const handleEditVehicle = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setFormData({
+      name: vehicle.name,
+      description: vehicle.description,
+      capacity: vehicle.capacity.toString(),
+      image: vehicle.image,
+    });
+    setIsModalOpen(true);
   };
 
   const filteredVehicles = vehicles.filter(vehicle =>
@@ -86,7 +117,7 @@ const ManageVehicles = () => {
         <h1 className="font-heading text-2xl font-bold text-gray-900 md:text-3xl">Manage Vehicles</h1>
         <button
           onClick={() => {
-            setEditingVehicle(null);
+            resetForm();
             setIsModalOpen(true);
           }}
           className="flex items-center rounded-lg bg-primary-500 px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-600"
@@ -130,10 +161,7 @@ const ManageVehicles = () => {
                 </div>
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => {
-                      setEditingVehicle(vehicle);
-                      setIsModalOpen(true);
-                    }}
+                    onClick={() => handleEditVehicle(vehicle)}
                     className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
                   >
                     <Edit className="h-5 w-5" />
@@ -160,7 +188,82 @@ const ManageVehicles = () => {
         ))}
       </div>
 
-      {/* Vehicle Form Modal would go here */}
+      {/* Vehicle Form Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md rounded-lg bg-white p-6">
+            <h2 className="mb-4 text-xl font-bold">
+              {editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
+            </h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Vehicle Name</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                  required
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Passenger Capacity</label>
+                <input
+                  type="number"
+                  value={formData.capacity}
+                  onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                  required
+                  min="1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Image URL</label>
+                <input
+                  type="url"
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    resetForm();
+                  }}
+                  className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-primary-500 px-4 py-2 text-white hover:bg-primary-600"
+                >
+                  {editingVehicle ? 'Update Vehicle' : 'Create Vehicle'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
