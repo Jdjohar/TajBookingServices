@@ -13,6 +13,7 @@ import routeRoutes from './routes/routes.js';
 import vehicleRoutes from './routes/vehicles.js';
 import locationRoutes from './routes/locations.js';
 import adminRoutes from './routes/admin.js';
+import stripeRoutes from './routes/stripe.js';
 
 dotenv.config();
 
@@ -27,10 +28,8 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from the React app in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../dist')));
-}
+// Stripe webhook needs raw body
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -39,9 +38,12 @@ app.use('/api/routes', routeRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/stripe', stripeRoutes);
 
-// Catch-all route to return the React app in production
+// Serve static files in production
 if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../dist')));
+  
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
   });
@@ -66,7 +68,6 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/airporttr
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Promise Rejection:', err);
-  // Don't crash the server on unhandled promise rejection in production
   if (process.env.NODE_ENV !== 'production') {
     process.exit(1);
   }

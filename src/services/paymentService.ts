@@ -4,7 +4,6 @@ import { BookingFormData } from '../types';
 const API_URL = 'https://tajbookingservices.onrender.com/api';
 const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
-// Initialize Stripe
 let stripePromise: Promise<any> | null = null;
 const getStripe = () => {
   if (!stripePromise) {
@@ -13,14 +12,47 @@ const getStripe = () => {
   return stripePromise;
 };
 
-export const createPaymentIntent = async (bookingData: BookingFormData) => {
+export const createCustomer = async (customerData: { email: string; name: string }) => {
   try {
-    const response = await fetch(`${API_URL}/create-payment-intent`, {
+    const response = await fetch(`${API_URL}/stripe/create-customer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(bookingData),
+      body: JSON.stringify(customerData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create customer');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Customer creation error:', error);
+    throw error;
+  }
+};
+
+export const createPaymentIntent = async (bookingData: BookingFormData) => {
+  try {
+    // Create customer first
+    const customer = await createCustomer({
+      email: bookingData.email,
+      name: bookingData.name,
+    });
+
+    const response = await fetch(`${API_URL}/stripe/create-payment-intent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount: bookingData.totalPrice,
+        currency: 'usd',
+        customer: customer.id,
+        bookingId: bookingData.bookingId,
+      }),
     });
 
     if (!response.ok) {
@@ -35,11 +67,30 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
   }
 };
 
-export const processPayment = async (bookingData: BookingFormData) => {
+export const handlePayment = async (bookingData: BookingFormData) => {
   try {
-    // Create payment intent
-    const { clientSecret } = await createPaymentIntent(bookingData);
-    
+    // Create booking first
+    const bookingResponse = await fetch(`${API_URL}/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bookingData),
+    });
+
+    if (!bookingResponse.ok) {
+      const errorData = await bookingResponse.json();
+      throw new Error(errorData.message || 'Failed to create booking');
+    }
+
+    const booking = await bookingResponse.json();
+
+    // Create payment intent with customer
+    const { clientSecret } = await createPaymentIntent({
+      ...bookingData,
+      bookingId: booking._id,
+    });
+
     // Load Stripe
     const stripe = await getStripe();
     if (!stripe) {
@@ -61,34 +112,6 @@ export const processPayment = async (bookingData: BookingFormData) => {
     if (paymentError) {
       throw new Error(paymentError.message);
     }
-
-    return paymentIntent;
-  } catch (error) {
-    console.error('Payment processing error:', error);
-    throw error;
-  }
-};
-
-export const handlePayment = async (bookingData: BookingFormData) => {
-  try {
-    // Create booking first
-    const response = await fetch(`${API_URL}/bookings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(bookingData),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create booking');
-    }
-
-    const booking = await response.json();
-
-    // Process payment
-    const paymentIntent = await processPayment(bookingData);
 
     // Update booking with payment information
     const updateResponse = await fetch(`${API_URL}/bookings/${booking._id}/payment`, {
