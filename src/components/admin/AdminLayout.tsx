@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   User,
+  Map,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -35,6 +36,7 @@ const AdminLayout = () => {
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Routes', href: '/admin/routes', icon: MapPin },
     { name: 'Vehicles', href: '/admin/vehicles', icon: Car },
+    { name: 'Locations', href: '/admin/locations', icon: Map },
     { name: 'Bookings', href: '/admin/bookings', icon: Calendar },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];

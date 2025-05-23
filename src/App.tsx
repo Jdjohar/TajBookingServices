@@ -10,6 +10,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import ManageRoutes from './pages/admin/ManageRoutes';
 import ManageVehicles from './pages/admin/ManageVehicles';
+import ManageLocations from './pages/admin/ManageLocations';
 import ManageBookings from './pages/admin/ManageBookings';
 import Settings from './pages/admin/Settings';
 import NotFound from './pages/NotFound';
@@ -50,6 +51,7 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="routes" element={<ManageRoutes />} />
         <Route path="vehicles" element={<ManageVehicles />} />
+        <Route path="locations" element={<ManageLocations />} />
         <Route path="bookings" element={<ManageBookings />} />
         <Route path="settings" element={<Settings />} />
       </Route>
