@@ -26,7 +26,7 @@ const ManageLocations = () => {
       setLocations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading locations:', error);
-      toast.error('Failed to load locations');
+      toast.error(error instanceof Error ? error.message : 'Failed to load locations');
       setLocations([]);
     } finally {
       setIsLoading(false);
@@ -36,11 +36,16 @@ const ManageLocations = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.name.trim()) {
+      toast.error('Location name is required');
+      return;
+    }
+    
     try {
       const locationData = {
-        name: formData.name,
+        name: formData.name.trim(),
         type: formData.type as 'airport' | 'destination',
-        address: formData.address,
+        address: formData.address.trim(),
       };
 
       if (editingLocation) {
@@ -59,7 +64,7 @@ const ManageLocations = () => {
       resetForm();
     } catch (error) {
       console.error('Error saving location:', error);
-      toast.error('Failed to save location');
+      toast.error(error instanceof Error ? error.message : 'Failed to save location');
     }
   };
 
@@ -71,7 +76,7 @@ const ManageLocations = () => {
         toast.success('Location deleted successfully');
       } catch (error) {
         console.error('Error deleting location:', error);
-        toast.error('Failed to delete location');
+        toast.error(error instanceof Error ? error.message : 'Failed to delete location');
       }
     }
   };

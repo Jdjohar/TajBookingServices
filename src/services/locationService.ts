@@ -5,7 +5,8 @@ const API_URL = 'https://tajbookingservices.onrender.com/api/locations';
 export const fetchLocations = async (): Promise<Location[]> => {
   const response = await fetch(API_URL);
   if (!response.ok) {
-    throw new Error('Failed to fetch locations');
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || 'Failed to fetch locations');
   }
   return response.json();
 };
@@ -20,7 +21,8 @@ export const createLocation = async (locationData: Omit<Location, '_id'>): Promi
   });
   
   if (!response.ok) {
-    throw new Error('Failed to create location');
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || `Failed to create location: ${response.status} ${response.statusText}`);
   }
   
   return response.json();
@@ -36,7 +38,8 @@ export const updateLocation = async (id: string, locationData: Partial<Location>
   });
   
   if (!response.ok) {
-    throw new Error('Failed to update location');
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || `Failed to update location: ${response.status} ${response.statusText}`);
   }
   
   return response.json();
@@ -48,6 +51,7 @@ export const deleteLocation = async (id: string): Promise<void> => {
   });
   
   if (!response.ok) {
-    throw new Error('Failed to delete location');
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || `Failed to delete location: ${response.status} ${response.statusText}`);
   }
 };
