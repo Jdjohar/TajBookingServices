@@ -69,6 +69,8 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
 
 export const handlePayment = async (bookingData: BookingFormData) => {
   try {
+    console.log("handlePayment start");
+    
     // Create booking first
     const bookingResponse = await fetch(`${API_URL}/bookings`, {
       method: 'POST',
@@ -78,12 +80,17 @@ export const handlePayment = async (bookingData: BookingFormData) => {
       body: JSON.stringify(bookingData),
     });
 
+    console.log("handlePayment 1");
+
     if (!bookingResponse.ok) {
       const errorData = await bookingResponse.json();
       throw new Error(errorData.message || 'Failed to create booking');
     }
 
+    console.log("handlePayment 2");
+
     const booking = await bookingResponse.json();
+    console.log(booking, "handlePayment 3");
 
     // Create payment intent with customer
     const { clientSecret } = await createPaymentIntent({
