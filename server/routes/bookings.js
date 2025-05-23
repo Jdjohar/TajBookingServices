@@ -1,4 +1,12 @@
 import express from 'express';
+import {
+  createBooking,
+  getBooking,
+  getAllBookings,
+  updateBookingStatus,
+  assignDriver,
+  cancelBooking
+} from '../controllers/bookingController.js';
 import authenticateUser from '../middleware/authentication.js';
 import authorize from '../middleware/authorize.js';
 
