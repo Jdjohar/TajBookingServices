@@ -1,56 +1,84 @@
 import axios from 'axios';
 import { Vehicle } from '../types';
 
-const API_URL = 'https://tajbookingservices.onrender.com/api/vehicles';
+const API_URL = 'http://localhost:5000/api/vehicles';
+
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
+}; 
 
 export const fetchVehicles = async (): Promise<Vehicle[]> => {
-  try {
-    const response = await axios.get(API_URL);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching vehicles:', error);
-    throw error;
-  }
-};
+  const response = await fetch(API_URL, {
+    headers: getAuthHeaders(),
+  });
 
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || 'Failed to fetch vehicles');
+  }
+
+  return response.json();
+};
 export const fetchVehicleById = async (id: string): Promise<Vehicle> => {
-  try {
-    const response = await axios.get(`${API_URL}/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching vehicle ${id}:`, error);
-    throw error;
+  const response = await fetch(`${API_URL}/${id}`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || `Failed to fetch vehicle: ${response.status} ${response.statusText}`);
   }
+
+  return response.json();
 };
 
-export const createVehicle = async (vehicleData: Partial<Vehicle>): Promise<Vehicle> => {
-  try {
-    const response = await axios.post(API_URL, vehicleData);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating vehicle:', error);
-    throw error;
+export const createVehicle = async (vehicleData: Omit<Vehicle, '_id'>): Promise<Vehicle> => {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(vehicleData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || `Failed to create vehicle: ${response.status} ${response.statusText}`);
   }
+
+  return response.json();
 };
 
 export const updateVehicle = async (id: string, vehicleData: Partial<Vehicle>): Promise<Vehicle> => {
-  try {
-    const response = await axios.put(`${API_URL}/${id}`, vehicleData);
-    return response.data;
-  } catch (error) {
-    console.error(`Error updating vehicle ${id}:`, error);
-    throw error;
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(vehicleData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || `Failed to update vehicle: ${response.status} ${response.statusText}`);
   }
+
+  return response.json();
 };
 
 export const deleteVehicle = async (id: string): Promise<void> => {
-  try {
-    await axios.delete(`${API_URL}/${id}`);
-  } catch (error) {
-    console.error(`Error deleting vehicle ${id}:`, error);
-    throw error;
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    throw new Error(errorData.message || `Failed to delete vehicle: ${response.status} ${response.statusText}`);
   }
 };
+
 
 // For now, we'll mock these API calls by returning sample data
 // This will be replaced with actual API calls when the backend is implemented
