@@ -120,28 +120,59 @@ const BookingForm = () => {
     setIsLoading(true);
 
     try {
-      // Format the date for submission
-      const formattedDate = format(data.pickupDate, 'yyyy-MM-dd');
-      
+      // Validate all required fields
+      const requiredFields = {
+        pickupLocationId: 'Pickup location',
+        dropoffLocationId: 'Dropoff location',
+        pickupDate: 'Pickup date',
+        pickupTime: 'Pickup time',
+        vehicleId: 'Vehicle',
+        name: 'Full name',
+        email: 'Email',
+        phone: 'Phone number'
+      };
+
+      const missingFields = Object.entries(requiredFields)
+        .filter(([key]) => !data[key as keyof BookingFormData])
+        .map(([, label]) => label);
+
+      if (missingFields.length > 0) {
+        throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      }
+
+      // Format the booking data
       const bookingData = {
         ...data,
-        pickupDate: formattedDate,
+        pickupDate: format(data.pickupDate, 'yyyy-MM-dd'),
         totalPrice: price,
       };
 
-      // Handle payment and booking creation
-      const { booking } = await handlePayment(bookingData);
-      
-      // Navigate to confirmation page with booking ID
-      navigate(`/booking/confirmation/${booking._id}`);
-      toast.success('Booking confirmed and payment processed successfully!');
+      try {
+        // Handle payment and booking creation
+        const { booking } = await handlePayment(bookingData);
+        
+        if (!booking || !booking._id) {
+          throw new Error('Invalid booking response received');
+        }
+
+        // Navigate to confirmation page with booking ID
+        navigate(`/booking/confirmation/${booking._id}`);
+        toast.success('Booking confirmed and payment processed successfully!');
+      } catch (paymentError) {
+        console.error('Payment processing error:', paymentError);
+        throw new Error(
+          paymentError instanceof Error 
+            ? paymentError.message 
+            : 'Failed to process payment. Please try again.'
+        );
+      }
     } catch (error) {
+      console.error('Form submission error:', error);
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'An unexpected error occurred while processing your payment';
+        : 'An unexpected error occurred. Please try again.';
       
       toast.error(errorMessage);
-      console.error('Booking/payment error:', error);
     } finally {
       setIsLoading(false);
     }
