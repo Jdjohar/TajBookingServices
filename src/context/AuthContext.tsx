@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { User, AuthState } from '../types';
 
+// Base URL for API calls
+const API_BASE_URL = 'http://localhost:5000';
+
 interface AuthContextProps {
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -39,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       try {
-        const res = await axios.get('/api/auth/user', {
+        const res = await axios.get(`${API_BASE_URL}/api/auth/user`, {
           headers: {
             Authorization: `Bearer ${authState.token}`,
           },
@@ -69,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await axios.post('/api/auth/login', { email, password });
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       const { token, user } = res.data;
 
       localStorage.setItem('token', token);
