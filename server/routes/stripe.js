@@ -13,42 +13,51 @@ router.post('/create-customer', async (req, res) => {
   try {
     const { email, name } = req.body;
 
+    if (!email || !name) {
+      return res.status(400).json({ message: 'Email and name are required' });
+    }
+
     const customer = await stripe.customers.create({
       email,
       name,
       metadata: {
-        userId: req.user?.userId || 'guest'
-      }
+        userId: req.user?.userId || 'guest',
+      },
     });
 
+    console.log('Created customer:', customer.id);
     res.status(200).json({ customer });
   } catch (error) {
     console.error('Create customer error:', error);
-    res.status(500).json({ message: 'Failed to create customer' });
+    res.status(500).json({ message: `Failed to create customer: ${error.message}` });
   }
 });
 
 // Create payment intent
 router.post('/create-payment-intent', async (req, res) => {
   try {
-    const { amount, currency = 'usd', customer } = req.body;
+    const { amount, currency, customer, description, statement_descriptor, metadata } = req.body;
+
+    if (!amount || !currency || !customer) {
+      return res.status(400).json({ message: 'Missing required fields: amount, currency, or customer' });
+    }
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
-      currency,
+      currency, // Use the provided currency
       customer,
       payment_method_types: ['card'],
-      metadata: {
-        bookingId: req.body.bookingId
-      }
+      description: description || 'Airport transfer payment',
+      statement_descriptor: statement_descriptor || 'AIRPORT TRANSFER',
+      metadata: metadata || { bookingId: req.body.bookingId || 'unknown' },
     });
 
     res.status(200).json({
-      clientSecret: paymentIntent.client_secret
+      clientSecret: paymentIntent.client_secret,
     });
   } catch (error) {
     console.error('Create payment intent error:', error);
-    res.status(500).json({ message: 'Failed to create payment intent' });
+    res.status(500).json({ message: `Failed to create payment intent: ${error.message}` });
   }
 });
 
