@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, MapPin } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { Route, Location } from '../../types';
+import { Route, Location, Vehicle } from '../../types';
 import { fetchRoutes, fetchLocations, createRoute, updateRoute, deleteRoute } from '../../services/routeService';
+import { fetchVehicles } from '../../services/vehicleService';
 
 const ManageRoutes = () => {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [formData, setFormData] = useState({
+    pickupLocationId: '',
+    dropoffLocationId: '',
+    distance: '',
+    prices: [] as { vehicleId: string; price: string }[],
+  });
 
   useEffect(() => {
     loadData();
@@ -18,44 +26,70 @@ const ManageRoutes = () => {
 
   const loadData = async () => {
     try {
-      const [routesData, locationsData] = await Promise.all([
+      const [routesData, locationsData, vehiclesData] = await Promise.all([
         fetchRoutes(),
         fetchLocations(),
+        fetchVehicles(),
       ]);
       setRoutes(Array.isArray(routesData) ? routesData : []);
       setLocations(Array.isArray(locationsData) ? locationsData : []);
+      setVehicles(Array.isArray(vehiclesData) ? vehiclesData : []);
+      
+      // Initialize prices array with all vehicles
+      if (Array.isArray(vehiclesData)) {
+        setFormData(prev => ({
+          ...prev,
+          prices: vehiclesData.map(vehicle => ({
+            vehicleId: vehicle._id,
+            price: '',
+          })),
+        }));
+      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load routes data');
       setRoutes([]);
       setLocations([]);
+      setVehicles([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateRoute = async (formData: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
-      const newRoute = await createRoute(formData);
-      setRoutes(prevRoutes => [...prevRoutes, newRoute]);
-      toast.success('Route created successfully');
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error creating route:', error);
-      toast.error('Failed to create route');
-    }
-  };
+      const routeData = {
+        pickupLocation: formData.pickupLocationId,
+        dropoffLocation: formData.dropoffLocationId,
+        distance: Number(formData.distance),
+        prices: formData.prices
+          .filter(p => p.price !== '') // Remove empty prices
+          .map(p => ({
+            vehicleId: p.vehicleId,
+            price: Number(p.price),
+          })),
+        active: true,
+      };
 
-  const handleUpdateRoute = async (id: string, formData: any) => {
-    try {
-      const updatedRoute = await updateRoute(id, formData);
-      setRoutes(prevRoutes => prevRoutes.map(route => route._id === id ? updatedRoute : route));
-      toast.success('Route updated successfully');
+      if (editingRoute) {
+        const updatedRoute = await updateRoute(editingRoute._id, routeData);
+        setRoutes(prevRoutes => prevRoutes.map(route => 
+          route._id === editingRoute._id ? updatedRoute : route
+        ));
+        toast.success('Route updated successfully');
+      } else {
+        const newRoute = await createRoute(routeData);
+        setRoutes(prevRoutes => [...prevRoutes, newRoute]);
+        toast.success('Route created successfully');
+      }
+      
       setIsModalOpen(false);
-      setEditingRoute(null);
+      resetForm();
     } catch (error) {
-      console.error('Error updating route:', error);
-      toast.error('Failed to update route');
+      console.error('Error saving route:', error);
+      toast.error('Failed to save route');
     }
   };
 
@@ -72,7 +106,34 @@ const ManageRoutes = () => {
     }
   };
 
-  const filteredRoutes = routes.filter(route => 
+  const resetForm = () => {
+    setFormData({
+      pickupLocationId: '',
+      dropoffLocationId: '',
+      distance: '',
+      prices: vehicles.map(vehicle => ({
+        vehicleId: vehicle._id,
+        price: '',
+      })),
+    });
+    setEditingRoute(null);
+  };
+
+  const handleEditRoute = (route: Route) => {
+    setEditingRoute(route);
+    setFormData({
+      pickupLocationId: route.pickupLocation._id,
+      dropoffLocationId: route.dropoffLocation._id,
+      distance: route.distance.toString(),
+      prices: vehicles.map(vehicle => ({
+        vehicleId: vehicle._id,
+        price: route.prices.find(p => p.vehicleId === vehicle._id)?.price.toString() || '',
+      })),
+    });
+    setIsModalOpen(true);
+  };
+
+  const filteredRoutes = routes.filter(route =>
     route.pickupLocation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     route.dropoffLocation.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -91,7 +152,7 @@ const ManageRoutes = () => {
         <h1 className="font-heading text-2xl font-bold text-gray-900 md:text-3xl">Manage Routes</h1>
         <button
           onClick={() => {
-            setEditingRoute(null);
+            resetForm();
             setIsModalOpen(true);
           }}
           className="flex items-center rounded-lg bg-primary-500 px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-600"
@@ -137,10 +198,7 @@ const ManageRoutes = () => {
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => {
-                    setEditingRoute(route);
-                    setIsModalOpen(true);
-                  }}
+                  onClick={() => handleEditRoute(route)}
                   className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
                 >
                   <Edit className="h-5 w-5" />
@@ -159,14 +217,15 @@ const ManageRoutes = () => {
               <div className="mt-2">
                 <p className="font-medium text-gray-700">Prices:</p>
                 <ul className="mt-1 space-y-1">
-                  {route.prices.map((price) => (
-                    <li key={price.vehicleId} className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        {vehicles.find(v => v._id === price.vehicleId)?.name}
-                      </span>
-                      <span className="font-medium text-primary-500">${price.price}</span>
-                    </li>
-                  ))}
+                  {route.prices.map((price) => {
+                    const vehicle = vehicles.find(v => v._id === price.vehicleId);
+                    return (
+                      <li key={price.vehicleId} className="flex justify-between text-sm">
+                        <span className="text-gray-600">{vehicle?.name}</span>
+                        <span className="font-medium text-primary-500">${price.price}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>
@@ -186,7 +245,117 @@ const ManageRoutes = () => {
         ))}
       </div>
 
-      {/* Route Form Modal would go here */}
+      {/* Route Form Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-2xl rounded-lg bg-white p-6">
+            <h2 className="mb-4 text-xl font-bold">
+              {editingRoute ? 'Edit Route' : 'Add New Route'}
+            </h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Pickup Location</label>
+                  <select
+                    value={formData.pickupLocationId}
+                    onChange={(e) => setFormData({ ...formData, pickupLocationId: e.target.value })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                    required
+                  >
+                    <option value="">Select pickup location</option>
+                    {locations
+                      .filter(loc => loc.type === 'airport')
+                      .map(location => (
+                        <option key={location._id} value={location._id}>
+                          {location.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Dropoff Location</label>
+                  <select
+                    value={formData.dropoffLocationId}
+                    onChange={(e) => setFormData({ ...formData, dropoffLocationId: e.target.value })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                    required
+                  >
+                    <option value="">Select dropoff location</option>
+                    {locations
+                      .filter(loc => loc.type === 'destination')
+                      .map(location => (
+                        <option key={location._id} value={location._id}>
+                          {location.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Distance (miles)</label>
+                  <input
+                    type="number"
+                    value={formData.distance}
+                    onChange={(e) => setFormData({ ...formData, distance: e.target.value })}
+                    className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                    required
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Vehicle Prices</label>
+                <div className="mt-2 space-y-2">
+                  {formData.prices.map((price, index) => {
+                    const vehicle = vehicles.find(v => v._id === price.vehicleId);
+                    return (
+                      <div key={price.vehicleId} className="flex items-center gap-2">
+                        <span className="w-1/3">{vehicle?.name}</span>
+                        <input
+                          type="number"
+                          value={price.price}
+                          onChange={(e) => {
+                            const newPrices = [...formData.prices];
+                            newPrices[index].price = e.target.value;
+                            setFormData({ ...formData, prices: newPrices });
+                          }}
+                          className="block w-full rounded-md border border-gray-300 p-2"
+                          min="0"
+                          step="0.01"
+                          placeholder="Enter price"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    resetForm();
+                  }}
+                  className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-primary-500 px-4 py-2 text-white hover:bg-primary-600"
+                >
+                  {editingRoute ? 'Update Route' : 'Create Route'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
