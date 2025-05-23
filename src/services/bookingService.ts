@@ -14,36 +14,56 @@ const getAuthHeaders = () => {
 };
 
 const handleResponse = async (response: Response) => {
-  const contentType = response.headers.get('content-type');
   if (!response.ok) {
-    if (contentType && contentType.includes('application/json')) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Request failed');
+    const contentType = response.headers.get('content-type');
+    try {
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Request failed');
+      }
+      const textError = await response.text();
+      throw new Error(textError || `HTTP error! status: ${response.status}`);
+    } catch (error) {
+      if (error instanceof Error) throw error;
+      throw new Error(`Request failed with status: ${response.status}`);
     }
-    throw new Error(`HTTP error! status: ${response.status}`);
   }
   
-  if (contentType && contentType.includes('application/json')) {
-    return response.json();
+  try {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+    throw new Error('Invalid response format from server');
+  } catch (error) {
+    throw new Error('Failed to parse server response');
   }
-  
-  throw new Error('Invalid response format from server');
 };
 
 export const createBooking = async (bookingData: BookingFormData): Promise<Booking> => {
   try {
+    // Validate required fields before making the request
+    const requiredFields = ['pickupLocationId', 'dropoffLocationId', 'pickupDate', 'pickupTime', 'vehicleId', 'name', 'email', 'phone'];
+    const missingFields = requiredFields.filter(field => !bookingData[field as keyof BookingFormData]);
+    
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
+
     const headers = getAuthHeaders();
     const response = await fetch(API_URL, {
       method: 'POST',
       headers,
       body: JSON.stringify(bookingData),
     });
+    
     return handleResponse(response);
   } catch (error) {
     console.error('Booking creation error:', error);
-    throw error instanceof Error 
-      ? error 
-      : new Error('Failed to create booking');
+    if (error instanceof Error) {
+      throw new Error(`Failed to create booking: ${error.message}`);
+    }
+    throw new Error('Failed to create booking: Unknown error occurred');
   }
 };
 
