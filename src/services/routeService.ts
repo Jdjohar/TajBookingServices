@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Route, Location } from '../types';
 
-const API_URL = '/api/routes';
-const LOCATIONS_URL = '/api/locations';
+const API_URL = 'https://tajbookingservices.onrender.com/api/routes';
+const LOCATIONS_URL = 'https://tajbookingservices.onrender.com/api/locations';
 
 export const fetchRoutes = async (): Promise<Route[]> => {
   try {
