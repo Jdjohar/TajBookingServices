@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import { config } from '../config/config.js';
 
 // Register new user (admin only functionality)
 export const register = async (req, res) => {
@@ -23,8 +24,8 @@ export const register = async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, name: user.name, role: user.role },
-      process.env.JWT_SECRET || 'jwtsecret',
-      { expiresIn: '30d' }
+      config.jwt.secret,
+      { expiresIn: config.jwt.lifetime }
     );
     
     res.status(201).json({
@@ -62,8 +63,8 @@ export const login = async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, name: user.name, role: user.role },
-      process.env.JWT_SECRET || 'jwtsecret',
-      { expiresIn: '30d' }
+      config.jwt.secret,
+      { expiresIn: config.jwt.lifetime }
     );
     
     res.status(200).json({
