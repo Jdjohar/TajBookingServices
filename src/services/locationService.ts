@@ -1,6 +1,6 @@
 import { Location } from '../types';
 
-const API_URL = '/api/locations';
+const API_URL = 'https://tajbookingservices.onrender.com/api/locations';
 
 export const fetchLocations = async (): Promise<Location[]> => {
   const response = await fetch(API_URL);
