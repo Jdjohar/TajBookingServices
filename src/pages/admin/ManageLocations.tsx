@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search, MapPin } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Location } from '../../types';
-import { fetchLocations, createLocation, updateLocation, deleteLocation } from '../../services/routeService';
+import { fetchLocations, createLocation, updateLocation, deleteLocation } from '../../services/locationService';
 
 const ManageLocations = () => {
   const [locations, setLocations] = useState<Location[]>([]);
