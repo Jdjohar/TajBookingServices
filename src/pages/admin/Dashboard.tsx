@@ -94,7 +94,7 @@ const Dashboard = () => {
         _id: '3',
         customer: { name: 'Michael Johnson' },
         route: {
-          pickupLocation: { name: 'O\'Hare Airport' },
+          pickupLocation: { name: "O'Hare Airport" },
           dropoffLocation: { name: 'Chicago Loop' },
         },
         vehicle: { name: 'Luxury Van' },
@@ -120,7 +120,7 @@ const Dashboard = () => {
     topRoutes: [
       { _id: '1', route: 'JFK Airport to Manhattan', count: 45 },
       { _id: '2', route: 'LAX Airport to Downtown LA', count: 38 },
-      { _id: '3', route: 'O\'Hare Airport to Chicago Loop', count: 29 },
+      { _id: '3', route: "O'Hare Airport to Chicago Loop", count: 29 },
       { _id: '4', route: 'Heathrow Airport to Central London', count: 22 },
     ],
     monthlyRevenue: [
@@ -194,7 +194,9 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">${displayStats.totalRevenue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                ${displayStats?.totalRevenue?.toLocaleString() ?? '0'}
+              </p>
             </div>
           </div>
           <div className="mt-4 flex items-center text-sm">
