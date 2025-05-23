@@ -128,18 +128,19 @@ const BookingForm = () => {
         totalPrice: price,
       };
 
-      const response = await createBooking(bookingData);
+      // Handle payment and booking creation
+      const { booking } = await handlePayment(bookingData);
       
       // Navigate to confirmation page with booking ID
-      navigate(`/booking/confirmation/${response._id}`);
-      toast.success('Booking submitted successfully!');
+      navigate(`/booking/confirmation/${booking._id}`);
+      toast.success('Booking confirmed and payment processed successfully!');
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'An unexpected error occurred while creating your booking';
+        : 'An unexpected error occurred while processing your payment';
       
       toast.error(errorMessage);
-      console.error('Booking error:', error);
+      console.error('Booking/payment error:', error);
     } finally {
       setIsLoading(false);
     }
