@@ -1,6 +1,13 @@
 import express from 'express';
 import authenticateUser from '../middleware/authentication.js';
 import authorize from '../middleware/authorize.js';
+import {
+  getDashboardStats,
+  getRevenue,
+  getTopRoutes,
+  getVehicleUtilization,
+  getCustomerStats
+} from '../controllers/adminController.js';
 
 const router = express.Router();
 
