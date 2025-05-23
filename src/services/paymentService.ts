@@ -83,7 +83,6 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
 
 export const handlePayment = async (bookingData: BookingFormData) => {
   try {
-    // Create booking first
     const bookingResponse = await fetch(`${API_URL}/bookings`, {
       method: 'POST',
       headers: {
@@ -113,12 +112,16 @@ export const handlePayment = async (bookingData: BookingFormData) => {
 
     const booking = await bookingResponse.json();
 
-    // Create payment intent with detailed description
     const { clientSecret } = await createPaymentIntent({
       ...bookingData,
       bookingId: booking._id,
     });
 
+    if (!clientSecret) {
+      throw new Error('No client secret returned from backend');
+    }
+
+    console.log('Client Secret received:', clientSecret); // Log the clientSecret
     return {
       booking,
       clientSecret,
