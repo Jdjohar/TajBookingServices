@@ -9,6 +9,7 @@ import { BookingFormData, Route, Vehicle, Location } from '../../types';
 import { createBooking } from '../../services/bookingService';
 import { fetchLocations, fetchRoutes } from '../../services/routeService';
 import { fetchVehicles } from '../../services/vehicleService';
+import { handlePayment } from '../../services/paymentService';
 
 const BookingForm = () => {
   const [locations, setLocations] = useState<Location[]>([]);
