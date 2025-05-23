@@ -49,9 +49,20 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
       },
       body: JSON.stringify({
         amount: bookingData.totalPrice,
-        currency: 'usd',
+        currency: 'inr', // Changed to INR for Indian transactions
         customer: customer.id,
         bookingId: bookingData.bookingId,
+        description: `Airport transfer service from ${bookingData.pickupLocationId} to ${bookingData.dropoffLocationId}`, // Added description
+        statement_descriptor: 'AIRPORT TRANSFER', // Added statement descriptor
+        metadata: {
+          booking_id: bookingData.bookingId,
+          customer_name: bookingData.name,
+          customer_email: bookingData.email,
+          pickup_location: bookingData.pickupLocationId,
+          dropoff_location: bookingData.dropoffLocationId,
+          pickup_date: new Date(bookingData.pickupDate).toISOString(),
+          pickup_time: bookingData.pickupTime,
+        },
       }),
     });
 
