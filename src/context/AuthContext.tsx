@@ -3,7 +3,7 @@ import axios from 'axios';
 import { User, AuthState } from '../types';
 
 // Base URL for API calls
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://tajbookingservices.onrender.com';
 
 interface AuthContextProps {
   isAuthenticated: boolean;
