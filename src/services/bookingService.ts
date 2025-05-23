@@ -4,6 +4,9 @@ const API_URL = 'https://tajbookingservices.onrender.com/api/bookings';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
@@ -11,20 +14,37 @@ const getAuthHeaders = () => {
 };
 
 const handleResponse = async (response: Response) => {
+  const contentType = response.headers.get('content-type');
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(errorData.message || 'Request failed');
+    if (contentType && contentType.includes('application/json')) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Request failed');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
-  return response.json();
+  
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  }
+  
+  throw new Error('Invalid response format from server');
 };
 
 export const createBooking = async (bookingData: BookingFormData): Promise<Booking> => {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(bookingData),
-  });
-  return handleResponse(response);
+  try {
+    const headers = getAuthHeaders();
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(bookingData),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Booking creation error:', error);
+    throw error instanceof Error 
+      ? error 
+      : new Error('Failed to create booking');
+  }
 };
 
 export const getBookingById = async (id: string): Promise<Booking> => {

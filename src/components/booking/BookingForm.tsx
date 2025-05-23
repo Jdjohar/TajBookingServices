@@ -58,7 +58,8 @@ const BookingForm = () => {
         const pickups = locationsData.filter((loc) => loc.type === 'airport');
         setPickupLocations(pickups);
       } catch (error) {
-        toast.error('Failed to load booking data');
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load booking data';
+        toast.error(errorMessage);
         console.error('Error loading booking data:', error);
       }
     };
@@ -111,7 +112,7 @@ const BookingForm = () => {
 
   const onSubmit = async (data: BookingFormData) => {
     if (!price) {
-      toast.error('Please complete all selections to see the price');
+      toast.error('Please complete all selections to see price');
       return;
     }
 
@@ -133,7 +134,11 @@ const BookingForm = () => {
       navigate(`/booking/confirmation/${response._id}`);
       toast.success('Booking submitted successfully!');
     } catch (error) {
-      toast.error('Failed to create booking. Please try again.');
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unexpected error occurred while creating your booking';
+      
+      toast.error(errorMessage);
       console.error('Booking error:', error);
     } finally {
       setIsLoading(false);
