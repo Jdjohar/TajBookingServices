@@ -8,7 +8,7 @@ const handleResponse = async (response: Response) => {
     try {
       if (contentType && contentType.includes('application/json')) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Request failed');
+        throw new Error(errorData.message || `Request failed with status: ${response.status}`);
       }
       const textError = await response.text();
       throw new Error(textError || `HTTP error! status: ${response.status}`);
@@ -39,19 +39,30 @@ export const createBooking = async (bookingData: BookingFormData): Promise<Booki
       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
+    // Format the date to ensure it's in the correct format
+    const formattedData = {
+      ...bookingData,
+      pickupDate: new Date(bookingData.pickupDate).toISOString().split('T')[0],
+    };
+
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(bookingData),
+      body: JSON.stringify(formattedData),
     });
     
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to create booking' }));
+      throw new Error(errorData.message || 'Failed to create booking');
+    }
+
     return handleResponse(response);
   } catch (error) {
     console.error('Booking creation error:', error);
     if (error instanceof Error) {
-      throw new Error(`Failed to create booking: ${error.message}`);
+      throw error;
     }
     throw new Error('Failed to create booking: Unknown error occurred');
   }
