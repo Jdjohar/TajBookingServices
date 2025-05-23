@@ -6,10 +6,9 @@ import { addDays, format, isAfter } from 'date-fns';
 import { toast } from 'react-toastify';
 import { Calendar, Clock, MapPin, Car, User, Mail, Phone, FileText } from 'lucide-react';
 import { BookingFormData, Route, Vehicle, Location } from '../../types';
-import { createBooking } from '../../services/bookingService';
+import { handlePayment } from '../../services/paymentService';
 import { fetchLocations, fetchRoutes } from '../../services/routeService';
 import { fetchVehicles } from '../../services/vehicleService';
-import { handlePayment } from '../../services/paymentService';
 
 const BookingForm = () => {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -30,17 +29,12 @@ const BookingForm = () => {
     watch,
     setValue,
     formState: { errors },
-  } = useForm<BookingFormData>({
-    defaultValues: {
-      pickupDate: addDays(new Date(), 2),
-      pickupTime: '12:00',
-    },
-  });
+  } = useForm<BookingFormData>();
 
   const pickupLocationId = watch('pickupLocationId');
   const dropoffLocationId = watch('dropoffLocationId');
   const vehicleId = watch('vehicleId');
-  const minDate = addDays(new Date(), 2); // Minimum 2 days in advance
+  const minDate = addDays(new Date(), 2);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -55,7 +49,6 @@ const BookingForm = () => {
         setRoutes(routesData);
         setVehicles(vehiclesData);
 
-        // Filter pickup locations (airports)
         const pickups = locationsData.filter((loc) => loc.type === 'airport');
         setPickupLocations(pickups);
       } catch (error) {
@@ -70,7 +63,6 @@ const BookingForm = () => {
 
   useEffect(() => {
     if (pickupLocationId) {
-      // Filter compatible dropoff locations based on available routes
       const availableRoutes = routes.filter(
         (route) => route.pickupLocation._id === pickupLocationId && route.active
       );
@@ -78,7 +70,6 @@ const BookingForm = () => {
       const availableDropoffs = availableRoutes.map((route) => route.dropoffLocation);
       setDropoffLocations(availableDropoffs);
       
-      // Reset dropoff selection when pickup changes
       setValue('dropoffLocationId', '');
       setSelectedRoute(null);
       setPrice(null);
@@ -87,19 +78,17 @@ const BookingForm = () => {
 
   useEffect(() => {
     if (pickupLocationId && dropoffLocationId) {
-      // Find the route for the selected pickup and dropoff
       const route = routes.find(
         (r) => r.pickupLocation._id === pickupLocationId && r.dropoffLocation._id === dropoffLocationId && r.active
       );
       
       setSelectedRoute(route || null);
-      setPrice(null); // Reset price until vehicle is selected
+      setPrice(null);
     }
   }, [pickupLocationId, dropoffLocationId, routes]);
 
   useEffect(() => {
     if (selectedRoute && vehicleId) {
-      // Find price for the selected route and vehicle
       const vehiclePrice = selectedRoute.prices.find((p) => p.vehicleId === vehicleId);
       
       if (vehiclePrice) {
@@ -112,7 +101,7 @@ const BookingForm = () => {
   }, [selectedRoute, vehicleId, vehicles]);
 
   const onSubmit = async (data: BookingFormData) => {
-    if (!price) {
+    if (!price || !selectedRoute || !selectedVehicle) {
       toast.error('Please complete all selections to see price');
       return;
     }
@@ -120,52 +109,29 @@ const BookingForm = () => {
     setIsLoading(true);
 
     try {
-      // Validate all required fields
-      const requiredFields = {
-        pickupLocationId: 'Pickup location',
-        dropoffLocationId: 'Dropoff location',
-        pickupDate: 'Pickup date',
-        pickupTime: 'Pickup time',
-        vehicleId: 'Vehicle',
-        name: 'Full name',
-        email: 'Email',
-        phone: 'Phone number'
-      };
-
-      const missingFields = Object.entries(requiredFields)
-        .filter(([key]) => !data[key as keyof BookingFormData])
-        .map(([, label]) => label);
-
-      if (missingFields.length > 0) {
-        throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
-      }
-
       // Format the booking data
       const bookingData = {
-        ...data,
+        customer: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+        },
+        route: selectedRoute._id,
+        vehicle: selectedVehicle._id,
         pickupDate: format(data.pickupDate, 'yyyy-MM-dd'),
+        pickupTime: data.pickupTime,
         totalPrice: price,
+        notes: data.notes,
       };
 
-      try {
-        // Handle payment and booking creation
-        const { booking } = await handlePayment(bookingData);
-        
-        if (!booking || !booking._id) {
-          throw new Error('Invalid booking response received');
-        }
-
-        // Navigate to confirmation page with booking ID
-        navigate(`/booking/confirmation/${booking._id}`);
-        toast.success('Booking confirmed and payment processed successfully!');
-      } catch (paymentError) {
-        console.error('Payment processing error:', paymentError);
-        throw new Error(
-          paymentError instanceof Error 
-            ? paymentError.message 
-            : 'Failed to process payment. Please try again.'
-        );
+      const { booking } = await handlePayment(bookingData);
+      
+      if (!booking || !booking._id) {
+        throw new Error('Invalid booking response received');
       }
+
+      navigate(`/booking/confirmation/${booking._id}`);
+      toast.success('Booking confirmed and payment processed successfully!');
     } catch (error) {
       console.error('Form submission error:', error);
       const errorMessage = error instanceof Error 
