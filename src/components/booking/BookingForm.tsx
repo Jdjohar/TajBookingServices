@@ -147,7 +147,7 @@ const BookingFormContent = () => {
         ...data,
         totalPrice: price,
       });
-
+console.log('Client Secret:', clientSecret); // Log the clientSecret
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
         throw new Error('Card element not found');
