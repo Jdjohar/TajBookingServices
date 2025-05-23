@@ -129,63 +129,68 @@ const BookingFormContent = () => {
     }
   }, [selectedRoute, vehicleId, vehicles]);
 
-  const onSubmit = async (data: BookingFormData) => {
-    if (!stripe || !elements) {
-      toast.error('Stripe has not been initialized');
-      return;
+const onSubmit = async (data: BookingFormData) => {
+  if (!stripe || !elements) {
+    toast.error('Stripe has not been initialized');
+    return;
+  }
+
+  if (!price || !selectedRoute || !selectedVehicle) {
+    toast.error('Please complete all selections to see price');
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const { booking, clientSecret } = await handlePayment({
+      ...data,
+      totalPrice: price,
+    });
+
+    console.log('Booking ID:', booking._id, 'Client Secret:', clientSecret);
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      throw new Error('Card element not found');
     }
 
-    if (!price || !selectedRoute || !selectedVehicle) {
-      toast.error('Please complete all selections to see price');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { booking, clientSecret } = await handlePayment({
-        ...data,
-        totalPrice: price,
-      });
-console.log('Client Secret:', clientSecret); // Log the clientSecret
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) {
-        throw new Error('Card element not found');
-      }
-
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
-        clientSecret,
-        {
-          payment_method: {
-            card: cardElement,
-            billing_details: {
-              name: data.name,
-              email: data.email,
-            },
+    const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
+      clientSecret,
+      {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: data.name,
+            email: data.email,
           },
-        }
-      );
-
-      if (stripeError) {
-        throw new Error(stripeError.message);
+        },
       }
+    );
 
-      if (paymentIntent.status === 'succeeded') {
-        navigate(`/booking/confirmation/${booking._id}`);
-        toast.success('Booking confirmed and payment processed successfully!');
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'An unexpected error occurred. Please try again.';
-      
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
+    if (stripeError) {
+      console.error('Stripe error details:', stripeError);
+      throw new Error(stripeError.message);
     }
-  };
 
+    if (paymentIntent.status === 'succeeded') {
+      navigate(`/booking/confirmation/${booking._id}`);
+      toast.success('Booking confirmed and payment processed successfully!');
+    } else {
+      console.warn('Payment Intent status:', paymentIntent.status);
+      throw new Error('Payment not completed successfully');
+    }
+  } catch (error) {
+    console.error('Form submission error:', error);
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'An unexpected error occurred. Please try again.';
+    toast.error(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
   const handleDateChange = (date: Date) => {
     if (isAfter(date, minDate) || date.toDateString() === minDate.toDateString()) {
       setValue('pickupDate', date);
