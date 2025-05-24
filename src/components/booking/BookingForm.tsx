@@ -110,7 +110,7 @@ const BookingFormContent = () => {
       const route = routes.find(
         (r) => r.pickupLocation._id === pickupLocationId && r.dropoffLocation._id === dropoffLocationId && r.active
       );
-      
+      console.log(route,"df");
       setSelectedRoute(route || null);
       setPrice(null);
     }
@@ -145,11 +145,13 @@ const onSubmit = async (data: BookingFormData) => {
   try {
     const { booking, clientSecret } = await handlePayment({
       ...data,
+      routeId:selectedRoute._id,
       totalPrice: price,
     });
 
     console.log('Booking ID:', booking._id, 'Client Secret:', clientSecret);
-
+console.log('Booking ID:', booking._id);
+console.log('🧾 Client Secret being used with Stripe:', clientSecret);
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
       throw new Error('Card element not found');
@@ -191,6 +193,7 @@ const onSubmit = async (data: BookingFormData) => {
     setIsLoading(false);
   }
 };
+
   const handleDateChange = (date: Date) => {
     if (isAfter(date, minDate) || date.toDateString() === minDate.toDateString()) {
       setValue('pickupDate', date);

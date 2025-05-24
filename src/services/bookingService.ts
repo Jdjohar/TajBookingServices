@@ -1,8 +1,10 @@
 import { BookingFormData, Booking } from '../types';
 
-const API_URL = '/api/bookings';
+const API_URL = 'http://localhost:5000/api/bookings';
 
 const handleResponse = async (response: Response) => {
+  console.log("response start");
+  
   if (!response.ok) {
     const contentType = response.headers.get('content-type');
     try {
@@ -18,13 +20,16 @@ const handleResponse = async (response: Response) => {
       throw new Error(`Request failed with status: ${response.status}`);
     }
   }
-  
+  console.log("response start 2");
   try {
     const contentType = response.headers.get('content-type');
+    console.log("response start 3");
     if (contentType && contentType.includes('application/json')) {
       return await response.json();
     }
+    console.log("response start 4");
     const textResponse = await response.text();
+    
     console.error('Unexpected response format:', textResponse); // Log non-JSON responses
     throw new Error('Invalid response format from server');
   } catch (error) {
@@ -36,7 +41,7 @@ const handleResponse = async (response: Response) => {
 export const createBooking = async (bookingData: BookingFormData): Promise<Booking> => {
   try {
     // Validate required fields before making the request
-    const requiredFields = ['pickupLocationId', 'dropoffLocationId', 'pickupDate', 'pickupTime', 'vehicleId', 'name', 'email', 'phone'];
+    const requiredFields = ['routeId','pickupLocationId', 'dropoffLocationId', 'pickupDate', 'pickupTime', 'vehicleId', 'name', 'email', 'phone'];
     const missingFields = requiredFields.filter(field => !bookingData[field as keyof BookingFormData]);
     
     if (missingFields.length > 0) {
@@ -90,6 +95,8 @@ export const getAllBookings = async (): Promise<Booking[]> => {
   const response = await fetch(API_URL, {
     headers: getAuthHeaders(),
   });
+  console.log(response,"Response");
+  
   return handleResponse(response);
 };
 
