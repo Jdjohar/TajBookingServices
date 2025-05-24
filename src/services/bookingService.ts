@@ -1,6 +1,6 @@
 import { BookingFormData, Booking } from '../types';
 
-const API_URL = 'http://localhost:5000/api/bookings';
+const API_URL = 'https://tajbookingservices.onrender.com/api/bookings';
 
 const handleResponse = async (response: Response) => {
   console.log("response start");
