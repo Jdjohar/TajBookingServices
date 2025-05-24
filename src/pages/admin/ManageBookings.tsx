@@ -11,21 +11,16 @@ const ManageBookings = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
-const [locationsMap, setLocationsMap] = useState<{ [key: string]: string }>({});
+  const [locationsMap, setLocationsMap] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     loadBookings();
     loadLocations();
   }, []);
-  
-  
-
 
   const loadBookings = async () => {
     try {
       const data = await getAllBookings();
-      console.log(data,"sddsdsdsds");
-      
       setBookings(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading bookings:', error);
@@ -39,15 +34,10 @@ const [locationsMap, setLocationsMap] = useState<{ [key: string]: string }>({});
   const loadLocations = async () => {
     try {
       const locations = await fetchLocations();
-      console.log(locations,"sddssddsdsdsdsdsdssd");
-      
       const map: { [key: string]: string } = {};
       locations.forEach((loc: any) => {
         map[loc._id] = loc.name;
       });
-
-      console.log(map,"sdsddsds");
-      
       setLocationsMap(map);
     } catch (error) {
       console.error('Error loading locations:', error);
@@ -55,14 +45,67 @@ const [locationsMap, setLocationsMap] = useState<{ [key: string]: string }>({});
     }
   };
 
-  const handleStatusUpdate = async (id: string, status: 'pending' | 'confirmed' | 'completed' | 'cancelled') => {
+  const handleStatusUpdate = async (id: string, newStatus: 'pending' | 'confirmed' | 'completed' | 'cancelled') => {
     try {
-      const updatedBooking = await updateBookingStatus(id, status);
+      // Get the current booking
+      const currentBooking = bookings.find(b => b._id === id);
+      if (!currentBooking) {
+        toast.error('Booking not found');
+        return;
+      }
+
+      // Check if the status change is allowed
+      if (currentBooking.status === 'cancelled') {
+        toast.error('Cannot modify a cancelled booking');
+        return;
+      }
+
+      if (currentBooking.status === 'completed' && newStatus !== 'cancelled') {
+        toast.error('Completed bookings can only be cancelled');
+        return;
+      }
+
+      // Validate status transitions
+      const isValidTransition = validateStatusTransition(currentBooking.status, newStatus);
+      if (!isValidTransition) {
+        toast.error('Invalid status transition');
+        return;
+      }
+
+      const updatedBooking = await updateBookingStatus(id, newStatus);
       setBookings(bookings.map(booking => booking._id === id ? updatedBooking : booking));
-      toast.success(`Booking status updated to ${status}`);
+      
+      // Show success message and trigger email notification
+      const successMessage = getStatusUpdateMessage(newStatus);
+      toast.success(successMessage);
+
     } catch (error) {
       console.error('Error updating booking status:', error);
       toast.error('Failed to update booking status');
+    }
+  };
+
+  const validateStatusTransition = (currentStatus: string, newStatus: string): boolean => {
+    const allowedTransitions: { [key: string]: string[] } = {
+      'pending': ['confirmed', 'cancelled'],
+      'confirmed': ['completed', 'cancelled'],
+      'completed': ['cancelled'],
+      'cancelled': []
+    };
+
+    return allowedTransitions[currentStatus]?.includes(newStatus) || false;
+  };
+
+  const getStatusUpdateMessage = (status: string): string => {
+    switch (status) {
+      case 'confirmed':
+        return 'Booking confirmed! Confirmation email sent to customer.';
+      case 'completed':
+        return 'Booking marked as completed! Thank you email sent to customer.';
+      case 'cancelled':
+        return 'Booking cancelled. Cancellation notice sent to customer.';
+      default:
+        return 'Booking status updated successfully!';
     }
   };
 
@@ -202,12 +245,10 @@ const [locationsMap, setLocationsMap] = useState<{ [key: string]: string }>({});
                     <div>
                       <p className="font-medium text-gray-900">Route</p>
                       <p className="text-sm text-gray-600">
-                        {console.log(booking,"booking")}
-                        
-                        From:  {locationsMap[booking.route.pickupLocation] || 'Unknown'}
+                        From: {locationsMap[booking.route.pickupLocation] || 'Unknown'}
                       </p>
                       <p className="text-sm text-gray-600">
-                        To:  {locationsMap[booking.route.dropoffLocation] || 'Unknown'}
+                        To: {locationsMap[booking.route.dropoffLocation] || 'Unknown'}
                       </p>
                     </div>
                   </div>
@@ -243,30 +284,37 @@ const [locationsMap, setLocationsMap] = useState<{ [key: string]: string }>({});
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => handleStatusUpdate(booking._id, 'confirmed')}
-                    disabled={booking.status === 'confirmed'}
-                    className="flex items-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600 disabled:bg-gray-300"
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() => handleStatusUpdate(booking._id, 'completed')}
-                    disabled={booking.status === 'completed'}
-                    className="flex items-center rounded-lg bg-success-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success-600 disabled:bg-gray-300"
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Complete
-                  </button>
-                  <button
-                    onClick={() => handleStatusUpdate(booking._id, 'cancelled')}
-                    disabled={booking.status === 'cancelled'}
-                    className="flex items-center rounded-lg bg-danger-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-600 disabled:bg-gray-300"
-                  >
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Cancel
-                  </button>
+                  {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+                    <>
+                      {booking.status === 'pending' && (
+                        <button
+                          onClick={() => handleStatusUpdate(booking._id, 'confirmed')}
+                          className="flex items-center rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600"
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Confirm
+                        </button>
+                      )}
+                      {booking.status === 'confirmed' && (
+                        <button
+                          onClick={() => handleStatusUpdate(booking._id, 'completed')}
+                          className="flex items-center rounded-lg bg-success-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-success-600"
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Complete
+                        </button>
+                      )}
+                    </>
+                  )}
+                  {booking.status !== 'cancelled' && (
+                    <button
+                      onClick={() => handleStatusUpdate(booking._id, 'cancelled')}
+                      className="flex items-center rounded-lg bg-danger-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-600"
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Cancel
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center">

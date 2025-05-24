@@ -77,7 +77,7 @@ export const createPaymentIntent = async (bookingData: BookingFormData) => {
       currency: 'AUD',
       customer: customerId, // This should now be set properly
       bookingId: bookingData.bookingId,
-      description,
+      description: "Update Store",
       metadata: {
         booking_id: bookingData.bookingId,
         customer_name: bookingData.name,

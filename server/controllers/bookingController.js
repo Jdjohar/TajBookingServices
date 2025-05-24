@@ -1,4 +1,5 @@
 import Booking from '../models/Booking.js';
+import { sendEmail } from '../config/email.js';
 
 // Create new booking
 export const createBooking = async (req, res) => {
@@ -52,18 +53,33 @@ export const updateBookingStatus = async (req, res) => {
       req.params.id,
       { status },
       { new: true, runValidators: true }
-    );
-    
+    ).populate('route vehicle');
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
-    
+
+    // ✅ Send email to customer (nested under customer.email)
+    if (booking.customer?.email) {
+      await sendEmail({
+        to: booking.customer.email,
+        subject: 'Booking Status Updated',
+        html: `
+          <p>Dear ${booking.customer.name},</p>
+          <p>Your booking status has been updated to: <strong>${status}</strong>.</p>
+          <p>Booking ID: ${booking._id}</p>
+          <p>Thank you,<br/>Airport Transfers Team</p>
+        `,
+      });
+    }
+
     res.status(200).json(booking);
   } catch (error) {
     console.error('Update booking status error:', error);
     res.status(500).json({ message: 'Error updating booking status' });
   }
 };
+
 
 // Assign driver to booking
 export const assignDriver = async (req, res) => {
