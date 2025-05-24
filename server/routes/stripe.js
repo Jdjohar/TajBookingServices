@@ -62,7 +62,7 @@ router.post('/create-payment-intent', async (req, res) => {
   }
 });
 
-// Webhook handler
+// Webhook handler - Use raw body parser for Stripe webhook
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -70,7 +70,9 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   let event;
 
   try {
+    // Verify webhook signature using the raw body
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    console.log('Webhook signature verified successfully');
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
