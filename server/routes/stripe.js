@@ -1,6 +1,7 @@
 import express from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
+import Booking from '../models/Booking.js';
 import authenticateUser from '../middleware/authentication.js';
 
 dotenv.config();
@@ -79,13 +80,11 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        // Update booking status
         await handleSuccessfulPayment(paymentIntent);
         break;
 
       case 'payment_intent.payment_failed':
         const failedPayment = event.data.object;
-        // Handle failed payment
         await handleFailedPayment(failedPayment);
         break;
     }
@@ -98,15 +97,62 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 });
 
 async function handleSuccessfulPayment(paymentIntent) {
-  const bookingId = paymentIntent.metadata.bookingId;
-  // Update booking status in your database
-  // This is where you would update the booking status to 'confirmed'
+  try {
+    const bookingId = paymentIntent.metadata.bookingId;
+    if (!bookingId) {
+      throw new Error('No booking ID found in payment intent metadata');
+    }
+
+    // Update booking status and payment status
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      {
+        status: 'confirmed',
+        paymentStatus: 'paid',
+        paymentId: paymentIntent.id
+      },
+      { new: true }
+    );
+
+    if (!updatedBooking) {
+      throw new Error(`Booking not found with ID: ${bookingId}`);
+    }
+
+    console.log(`Successfully updated booking ${bookingId} after payment`);
+    return updatedBooking;
+  } catch (error) {
+    console.error('Error handling successful payment:', error);
+    throw error;
+  }
 }
 
 async function handleFailedPayment(paymentIntent) {
-  const bookingId = paymentIntent.metadata.bookingId;
-  // Update booking status in your database
-  // This is where you would update the booking status to 'payment_failed'
+  try {
+    const bookingId = paymentIntent.metadata.bookingId;
+    if (!bookingId) {
+      throw new Error('No booking ID found in payment intent metadata');
+    }
+
+    // Update booking payment status to failed
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      {
+        paymentStatus: 'failed',
+        status: 'pending'
+      },
+      { new: true }
+    );
+
+    if (!updatedBooking) {
+      throw new Error(`Booking not found with ID: ${bookingId}`);
+    }
+
+    console.log(`Updated booking ${bookingId} after failed payment`);
+    return updatedBooking;
+  } catch (error) {
+    console.error('Error handling failed payment:', error);
+    throw error;
+  }
 }
 
 export default router;
