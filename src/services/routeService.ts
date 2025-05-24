@@ -3,7 +3,7 @@
 import { Route, Location } from '../types';
 
 const API_URL = 'https://tajbookingservices.onrender.com/api/routes';
-const LOCATIONS_URL = 'http://localhost:5000/api/locations';
+const LOCATIONS_URL = 'https://tajbookingservices.onrender.com/api/locations';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
