@@ -1,7 +1,6 @@
 import express from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
-import Booking from '../models/Booking.js';
 import authenticateUser from '../middleware/authentication.js';
 
 dotenv.config();
@@ -37,21 +36,33 @@ router.post('/create-customer', async (req, res) => {
 // Create payment intent
 router.post('/create-payment-intent', async (req, res) => {
   try {
-    const { amount, currency, customer, description, statement_descriptor, metadata } = req.body;
+    const { amount, currency, customer, description, metadata } = req.body;
 
-    if (!amount || !currency || !customer) {
-      return res.status(400).json({ message: 'Missing required fields: amount, currency, or customer' });
+    if (!amount || !currency || !customer || !metadata?.customer_name || !metadata?.customer_email) {
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency, // Use the provided currency
-      customer,
-      payment_method_types: ['card'],
-      description: description || 'Airport transfer payment',
-      statement_descriptor: statement_descriptor || 'AIRPORT TRANSFER',
-      metadata: metadata || { bookingId: req.body.bookingId || 'unknown' },
-    });
+    const paymentIntentData = {
+  amount: Math.round(amount * 100),
+  currency,
+  customer,
+  payment_method_types: ['card'],
+  description: description || 'Airport transfer payment',
+  metadata,
+  receipt_email: metadata.customer_email,
+  shipping: {
+    name: metadata.customer_name || 'Test Customer',
+    address: {
+      line1: '123 Test Street',
+      city: 'Mumbai',
+      postal_code: '400001',
+      country: 'IN',
+      state: 'MH',
+    },
+  },
+};
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
 
     res.status(200).json({
       clientSecret: paymentIntent.client_secret,
@@ -62,7 +73,9 @@ router.post('/create-payment-intent', async (req, res) => {
   }
 });
 
-// Webhook handler - Use raw body parser for Stripe webhook
+// Webhook handler
+
+// Webhook handler
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
