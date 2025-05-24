@@ -74,6 +74,8 @@ router.post('/create-payment-intent', async (req, res) => {
 });
 
 // Webhook handler
+
+// Webhook handler
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -81,7 +83,9 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   let event;
 
   try {
+    // Verify webhook signature using the raw body
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    console.log('Webhook signature verified successfully');
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -91,13 +95,11 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        // Update booking status
         await handleSuccessfulPayment(paymentIntent);
         break;
 
       case 'payment_intent.payment_failed':
         const failedPayment = event.data.object;
-        // Handle failed payment
         await handleFailedPayment(failedPayment);
         break;
     }
@@ -110,59 +112,62 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 });
 
 async function handleSuccessfulPayment(paymentIntent) {
-  const bookingId = paymentIntent.metadata.bookingId;
-  if (!bookingId) {
-    console.warn('No bookingId in paymentIntent metadata');
-    return;
-  }
-
   try {
-    const booking = await Booking.findByIdAndUpdate(
+    const bookingId = paymentIntent.metadata.bookingId;
+    if (!bookingId) {
+      throw new Error('No booking ID found in payment intent metadata');
+    }
+
+    // Update booking status and payment status
+    const updatedBooking = await Booking.findByIdAndUpdate(
       bookingId,
       {
         status: 'confirmed',
         paymentStatus: 'paid',
-        paymentId: paymentIntent.id,
+        paymentId: paymentIntent.id
       },
       { new: true }
     );
 
-    if (!booking) {
-      console.warn(`Booking not found for ID: ${bookingId}`);
-    } else {
-      console.log(`Booking ${bookingId} updated to confirmed/paid`);
+    if (!updatedBooking) {
+      throw new Error(`Booking not found with ID: ${bookingId}`);
     }
+
+    console.log(`Successfully updated booking ${bookingId} after payment`);
+    return updatedBooking;
   } catch (error) {
-    console.error('Error updating booking on payment success:', error);
+    console.error('Error handling successful payment:', error);
+    throw error;
   }
 }
 
 async function handleFailedPayment(paymentIntent) {
-  const bookingId = paymentIntent.metadata.bookingId;
-  if (!bookingId) {
-    console.warn('No bookingId in failed paymentIntent metadata');
-    return;
-  }
-
   try {
-    const booking = await Booking.findByIdAndUpdate(
+    const bookingId = paymentIntent.metadata.bookingId;
+    if (!bookingId) {
+      throw new Error('No booking ID found in payment intent metadata');
+    }
+
+    // Update booking payment status to failed
+    const updatedBooking = await Booking.findByIdAndUpdate(
       bookingId,
       {
         paymentStatus: 'failed',
-        paymentId: paymentIntent.id,
+        status: 'pending'
       },
       { new: true }
     );
 
-    if (!booking) {
-      console.warn(`Booking not found for ID: ${bookingId}`);
-    } else {
-      console.log(`Booking ${bookingId} marked as payment failed`);
+    if (!updatedBooking) {
+      throw new Error(`Booking not found with ID: ${bookingId}`);
     }
+
+    console.log(`Updated booking ${bookingId} after failed payment`);
+    return updatedBooking;
   } catch (error) {
-    console.error('Error updating booking on payment failure:', error);
+    console.error('Error handling failed payment:', error);
+    throw error;
   }
 }
-
 
 export default router;
