@@ -1,7 +1,7 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { BookingFormData } from '../types';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://tajbookingservices.onrender.com/api';
 const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 
 let stripePromise: Promise<any> | null = null;
