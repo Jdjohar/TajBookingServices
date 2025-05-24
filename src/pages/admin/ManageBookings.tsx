@@ -3,6 +3,7 @@ import { Search, Filter, Calendar, Clock, MapPin, Car, User, CheckCircle, XCircl
 import { toast } from 'react-toastify';
 import { Booking } from '../../types';
 import { getAllBookings, updateBookingStatus, assignDriver } from '../../services/bookingService';
+import { fetchLocations } from '../../services/locationService';
 
 const ManageBookings = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -10,14 +11,21 @@ const ManageBookings = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+const [locationsMap, setLocationsMap] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     loadBookings();
+    loadLocations();
   }, []);
+  
+  
+
 
   const loadBookings = async () => {
     try {
       const data = await getAllBookings();
+      console.log(data,"sddsdsdsds");
+      
       setBookings(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading bookings:', error);
@@ -25,6 +33,25 @@ const ManageBookings = () => {
       setBookings([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadLocations = async () => {
+    try {
+      const locations = await fetchLocations();
+      console.log(locations,"sddssddsdsdsdsdsdssd");
+      
+      const map: { [key: string]: string } = {};
+      locations.forEach((loc: any) => {
+        map[loc._id] = loc.name;
+      });
+
+      console.log(map,"sdsddsds");
+      
+      setLocationsMap(map);
+    } catch (error) {
+      console.error('Error loading locations:', error);
+      toast.error('Failed to load locations');
     }
   };
 
@@ -175,10 +202,12 @@ const ManageBookings = () => {
                     <div>
                       <p className="font-medium text-gray-900">Route</p>
                       <p className="text-sm text-gray-600">
-                        From: {booking.route.pickupLocation.name}
+                        {console.log(booking,"booking")}
+                        
+                        From:  {locationsMap[booking.route.pickupLocation] || 'Unknown'}
                       </p>
                       <p className="text-sm text-gray-600">
-                        To: {booking.route.dropoffLocation.name}
+                        To:  {locationsMap[booking.route.dropoffLocation] || 'Unknown'}
                       </p>
                     </div>
                   </div>
