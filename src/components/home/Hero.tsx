@@ -68,7 +68,7 @@ const Hero = () => {
           >
             <div className="overflow-hidden rounded-xl">
               <img
-                src="https://images.pexels.com/photos/3771097/pexels-photo-3771097.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+                src="https://images.pexels.com/photos/5834939/pexels-photo-5834939.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
                 alt="Premium airport transfer"
                 className="h-auto w-full object-cover"
               />

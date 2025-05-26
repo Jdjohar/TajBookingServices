@@ -51,8 +51,8 @@ const Contact = () => {
             </div>
             <h3 className="mb-2 font-heading text-xl font-semibold text-gray-900">Phone</h3>
             <p className="text-gray-600">24/7 Customer Support</p>
-            <a href="tel:1-800-AIRPORT" className="mt-2 block text-lg font-medium text-primary-500 hover:text-primary-600">
-              1-800-AIRPORT
+            <a href="tel:+61450700077" className="mt-2 block text-lg font-medium text-primary-500 hover:text-primary-600">
+             +61 450 700 077
             </a>
           </motion.div>
 
@@ -68,10 +68,10 @@ const Contact = () => {
             <h3 className="mb-2 font-heading text-xl font-semibold text-gray-900">Email</h3>
             <p className="text-gray-600">Send us a message anytime</p>
             <a
-              href="mailto:info@airporttransfers.com"
+              href="mailto:info@tajairport.com"
               className="mt-2 block text-lg font-medium text-primary-500 hover:text-primary-600"
             >
-              info@airporttransfers.com
+              info@tajairport.com
             </a>
           </motion.div>
 
@@ -87,9 +87,9 @@ const Contact = () => {
             <h3 className="mb-2 font-heading text-xl font-semibold text-gray-900">Office</h3>
             <p className="text-gray-600">Visit our main office</p>
             <p className="mt-2 text-lg font-medium text-primary-500">
-              123 Airport Road, Suite 456
+              6/31 Digger Street Cairns North 
               <br />
-              Transport City, TC 12345
+              4870, Australia
             </p>
           </motion.div>
         </div>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Car, Mail, Phone, MapPin, Facebook, Twitter, Instagram } from 'lucide-react';
+import logo from '../../assets/logo.png'; // Adjust path if needed
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -10,8 +11,9 @@ const Footer = () => {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link to="/" className="mb-4 flex items-center space-x-2">
-              <Car size={32} className="text-accent-500" />
-              <span className="font-heading text-xl font-bold">AirportTransfers</span>
+              {/* <Car size={32} className="text-accent-500" /> */}
+              <img src={logo}  width={'60px'}/>
+              {/* <span className="font-heading text-xl font-bold">AirportTransfers</span> */}
             </Link>
             <p className="mb-6 text-gray-400">
               Premium private airport transfers. Fixed rates, professional service, and comfortable vehicles.
@@ -92,22 +94,22 @@ const Footer = () => {
               </li>
               <li className="flex items-center">
                 <Phone size={20} className="mr-2 flex-shrink-0 text-accent-500" />
-                <a href="tel:+123456789" className="text-gray-400 hover:text-accent-500">
-                  1-800-AIRPORT
+                <a href="tel:+61450700077" className="text-gray-400 hover:text-accent-500">
+                  +61 450 700 077
                 </a>
               </li>
-              <li className="flex items-center">
+              {/* <li className="flex items-center">
                 <Mail size={20} className="mr-2 flex-shrink-0 text-accent-500" />
                 <a href="mailto:info@airporttransfers.com" className="text-gray-400 hover:text-accent-500">
                   info@airporttransfers.com
                 </a>
-              </li>
+              </li> */}
             </ul>
           </div>
         </div>
 
         <div className="mt-12 border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
-          <p>&copy; {currentYear} AirportTransfers. All rights reserved.</p>
+          <p>&copy; {currentYear} Taj Private Cairns Airport Transfer. All rights reserved. Design and Developed by: <a className='primary' href="https://www.jdwebservices.com">www.jdwebservices.com</a></p>
           <div className="mt-2 space-x-4">
             <Link to="/privacy-policy" className="hover:text-accent-500">
               Privacy Policy

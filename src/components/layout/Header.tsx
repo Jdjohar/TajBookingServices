@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Car, Menu, X, Phone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import logo from '../../assets/logo.png'; // Adjust path if needed
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,8 +33,9 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2" onClick={closeMenu}>
-            <Car size={32} className="text-primary-500" />
-            <span className="font-heading text-xl font-bold text-gray-900">AirportTransfers</span>
+            {/* <Car size={32} className="text-primary-500" /> */}
+            <img src={logo}  width={'60px'}/>
+            {/* <span className="font-heading text-xl font-bold text-gray-900">{logo}</span> */}
           </Link>
 
           {/* Desktop Navigation */}
@@ -83,9 +85,9 @@ const Header = () => {
           </nav>
 
           <div className="hidden items-center space-x-4 md:flex">
-            <a href="tel:+123456789" className="flex items-center text-gray-700 hover:text-primary-500">
+            <a href="tel:+61450700077" className="flex items-center text-gray-700 hover:text-primary-500">
               <Phone size={18} className="mr-2" />
-              <span className="font-medium">1-800-AIRPORT</span>
+              <span className="font-medium">+61 450 700 077</span>
             </a>
             {isAuthenticated ? (
               <Link
@@ -166,12 +168,12 @@ const Header = () => {
               </li>
               <li>
                 <a
-                  href="tel:+123456789"
+                  href="tel:+61450700077"
                   className="flex items-center py-2 text-lg font-medium text-gray-700"
                   onClick={closeMenu}
                 >
                   <Phone size={18} className="mr-2" />
-                  <span>1-800-AIRPORT</span>
+                  <span>+61 450 700 077</span>
                 </a>
               </li>
               <li>
