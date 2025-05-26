@@ -25,7 +25,7 @@ const PopularRoutes = () => {
   useEffect(() => {
     const fetchRoutes = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/routes');
+        const response = await axios.get('https://tajbookingservices.onrender.com/api/routes');
         setRoutes(response.data);
       } catch (error) {
         console.error('Error fetching routes:', error);
