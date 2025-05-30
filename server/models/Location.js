@@ -21,4 +21,7 @@ const LocationSchema = new mongoose.Schema({
   },
 });
 
+// Composite index to ensure (name, type) is unique
+LocationSchema.index({ name: 1, type: 1 }, { unique: true });
+
 export default mongoose.model('Location', LocationSchema);
