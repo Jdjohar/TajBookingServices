@@ -5,7 +5,6 @@ const LocationSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide location name'],
     trim: true,
-    unique: true,
   },
   type: {
     type: String,
