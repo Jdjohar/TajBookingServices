@@ -34,6 +34,14 @@ export const createLocation = async (req, res) => {
     res.status(201).json(location);
   } catch (error) {
     console.error('Create location error:', error);
+
+    // Duplicate key error handling
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: 'Location with this name and type already exists',
+      });
+    }
+
     res.status(500).json({ message: 'Error creating location' });
   }
 };
