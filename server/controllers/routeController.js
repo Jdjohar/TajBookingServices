@@ -35,7 +35,17 @@ export const getRoute = async (req, res) => {
 
 // Create route
 export const createRoute = async (req, res) => {
+  const { pickupLocation, dropoffLocation } = req.body;
+
   try {
+    const existingRoute = await Route.findOne({ pickupLocation, dropoffLocation });
+
+    if (existingRoute) {
+      return res.status(400).json({
+        message: 'A route with the same pickup and dropoff location already exists',
+      });
+    }
+
     const route = await Route.create(req.body);
     res.status(201).json(route);
   } catch (error) {

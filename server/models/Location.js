@@ -1,3 +1,4 @@
+// models/location.js
 import mongoose from 'mongoose';
 
 const LocationSchema = new mongoose.Schema({
@@ -5,7 +6,6 @@ const LocationSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide location name'],
     trim: true,
-    unique: true,
   },
   type: {
     type: String,
@@ -21,5 +21,8 @@ const LocationSchema = new mongoose.Schema({
     default: true,
   },
 });
+
+// ✅ Composite unique index on name + type
+LocationSchema.index({ name: 1, type: 1 }, { unique: true });
 
 export default mongoose.model('Location', LocationSchema);

@@ -30,10 +30,31 @@ export const getLocation = async (req, res) => {
 // Create location
 export const createLocation = async (req, res) => {
   try {
+    console.log('Request body:', req.body); // Debug log
+    // Debug: Check if the document already exists
+    const existingLocation = await Location.findOne({
+      name: req.body.name,
+      type: req.body.type,
+    });
+    if (existingLocation) {
+      return res.status(400).json({
+        message: 'Location with this name and type already exists',
+        existing: existingLocation,
+      });
+    }
+
     const location = await Location.create(req.body);
     res.status(201).json(location);
   } catch (error) {
     console.error('Create location error:', error);
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: 'Location with this name and type already exists',
+        conflict: error.keyValue,
+      });
+    }
+
     res.status(500).json({ message: 'Error creating location' });
   }
 };

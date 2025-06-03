@@ -22,18 +22,26 @@ const item = {
 const PopularRoutes = () => {
   const [routes, setRoutes] = useState([]);
 
-  useEffect(() => {
-    const fetchRoutes = async () => {
-      try {
-        const response = await axios.get('https://tajbookingservices.onrender.com/api/routes');
-        setRoutes(response.data);
-      } catch (error) {
-        console.error('Error fetching routes:', error);
-      }
-    };
+ useEffect(() => {
+  const fetchRoutes = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/routes');
+      const allRoutes = response.data;
 
-    fetchRoutes();
-  }, []);
+      // Shuffle the array
+      const shuffled = allRoutes.sort(() => 0.5 - Math.random());
+
+      // Pick the first 4
+      const selectedRoutes = shuffled.slice(0, 4);
+
+      setRoutes(selectedRoutes);
+    } catch (error) {
+      console.error('Error fetching routes:', error);
+    }
+  };
+
+  fetchRoutes();
+}, []);
 
   return (
     <section className="py-20">
@@ -69,14 +77,14 @@ const PopularRoutes = () => {
               variants={item}
               className="group overflow-hidden rounded-xl bg-white shadow-md transition-all"
             >
-              <div className="relative h-48 overflow-hidden">
+              {/* <div className="relative h-48 overflow-hidden">
                 <img
                   src="https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
                   alt={`${route.pickupLocation.name} to ${route.dropoffLocation.name}`}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-70"></div>
-              </div>
+              </div> */}
               <div className="p-6">
                 <div className="mb-3 flex items-center">
                   <span className="text-lg font-medium text-gray-800">{route.pickupLocation.name}</span>

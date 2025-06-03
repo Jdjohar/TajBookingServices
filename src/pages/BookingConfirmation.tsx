@@ -14,6 +14,8 @@ const BookingConfirmation = () => {
       try {
         if (id) {
           const data = await getBookingById(id);
+          console.log(data, "data start");
+          
           setBooking(data);
         }
       } catch (error) {

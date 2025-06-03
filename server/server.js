@@ -22,14 +22,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 5000;
 
+// Stripe webhook needs raw body
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
 // Middleware
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Stripe webhook needs raw body
-app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 // API Routes
 app.use('/api/auth', authRoutes);

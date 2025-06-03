@@ -239,7 +239,7 @@ const ManageBookings = () => {
                       <p className="text-sm text-gray-600">{booking.customer.phone}</p>
                     </div>
                   </div>
-
+{console.log(booking)}
                   <div className="flex items-start">
                     <MapPin className="mr-3 mt-1 h-5 w-5 flex-shrink-0 text-primary-500" />
                     <div>

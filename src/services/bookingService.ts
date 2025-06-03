@@ -1,6 +1,6 @@
 import { BookingFormData, Booking } from '../types';
 
-const API_URL = 'https://tajbookingservices.onrender.com/api/bookings';
+const API_URL = 'http://localhost:5000/api/bookings';
 
 const handleResponse = async (response: Response) => {
   console.log("response start");
@@ -85,9 +85,12 @@ const getAuthHeaders = () => {
 };
 
 export const getBookingById = async (id: string): Promise<Booking> => {
-  const response = await fetch(`${API_URL}/${id}`, {
-    headers: getAuthHeaders(),
-  });
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const response = await fetch(`${API_URL}/${id}`, { headers });
   return handleResponse(response);
 };
 

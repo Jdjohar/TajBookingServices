@@ -2,6 +2,7 @@ import express from 'express';
 import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import authenticateUser from '../middleware/authentication.js';
+import Booking from '../models/Booking.js'; // Make sure this path is correct
 
 dotenv.config();
 
@@ -38,29 +39,29 @@ router.post('/create-payment-intent', async (req, res) => {
   try {
     const { amount, currency, customer, description, metadata } = req.body;
 
-    if (!amount || !currency || !customer || !metadata?.customer_name || !metadata?.customer_email) {
+    if (!amount || !currency || !customer || !metadata?.customer_name || !metadata?.customer_email || !metadata?.booking_id) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     const paymentIntentData = {
-  amount: Math.round(amount * 100),
-  currency,
-  customer,
-  payment_method_types: ['card'],
-  description: description || 'Airport transfer payment',
-  metadata,
-  receipt_email: metadata.customer_email,
-  shipping: {
-    name: metadata.customer_name || 'Test Customer',
-    address: {
-      line1: '123 Test Street',
-      city: 'Mumbai',
-      postal_code: '400001',
-      country: 'IN',
-      state: 'MH',
-    },
-  },
-};
+      amount: Math.round(amount * 100),
+      currency,
+      customer,
+      payment_method_types: ['card'],
+      description: description || 'Airport transfer payment',
+      metadata,
+      receipt_email: metadata.customer_email,
+      shipping: {
+        name: metadata.customer_name || 'Test Customer',
+        address: {
+          line1: '123 Test Street',
+          city: 'Mumbai',
+          postal_code: '400001',
+          country: 'IN',
+          state: 'MH',
+        },
+      },
+    };
 
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
 
@@ -74,16 +75,13 @@ router.post('/create-payment-intent', async (req, res) => {
 });
 
 // Webhook handler
-
-// Webhook handler
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event;
 
   try {
-    // Verify webhook signature using the raw body
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     console.log('Webhook signature verified successfully');
   } catch (err) {
@@ -113,12 +111,11 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
 async function handleSuccessfulPayment(paymentIntent) {
   try {
-    const bookingId = paymentIntent.metadata.bookingId;
+    const bookingId = paymentIntent.metadata.booking_id;
     if (!bookingId) {
       throw new Error('No booking ID found in payment intent metadata');
     }
 
-    // Update booking status and payment status
     const updatedBooking = await Booking.findByIdAndUpdate(
       bookingId,
       {
@@ -143,12 +140,11 @@ async function handleSuccessfulPayment(paymentIntent) {
 
 async function handleFailedPayment(paymentIntent) {
   try {
-    const bookingId = paymentIntent.metadata.bookingId;
+    const bookingId = paymentIntent.metadata.booking_id;
     if (!bookingId) {
       throw new Error('No booking ID found in payment intent metadata');
     }
 
-    // Update booking payment status to failed
     const updatedBooking = await Booking.findByIdAndUpdate(
       bookingId,
       {
