@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://tajbookingservices.onrender.com/api/admin';
+const API_URL = 'http://localhost:5000/api/admin';
 
 export const fetchDashboardStats = async () => {
   try {

@@ -17,7 +17,7 @@ import { handlePayment } from '../../services/paymentService';
 import { fetchLocations, fetchRoutes } from '../../services/routeService';
 import { fetchVehicles } from '../../services/vehicleService';
 
-const stripePromise = loadStripe(import.meta.env.STRIPE_PUBLIC_KEY);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const CARD_ELEMENT_OPTIONS = {
   style: {
