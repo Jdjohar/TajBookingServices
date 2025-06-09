@@ -1,6 +1,6 @@
 import { Location } from '../types';
 
-const API_URL = 'http://localhost:5000/api/locations';
+const API_URL = 'https://tajbookingservices-i051.onrender.com/api/locations';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');

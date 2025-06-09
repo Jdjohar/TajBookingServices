@@ -63,7 +63,7 @@ const BookingFormContent = () => {
   const pickupLocationId = watch('pickupLocationId');
   const dropoffLocationId = watch('dropoffLocationId');
   const vehicleId = watch('vehicleId');
-  const minDate = addDays(new Date(), 2);
+  const minDate = addDays(new Date(), 1);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -255,7 +255,7 @@ console.log('🧾 Client Secret being used with Stripe:', clientSecret);
           <div className="space-y-2">
             <label className="flex items-center text-sm font-medium text-gray-700">
               <Calendar size={18} className="mr-2 text-primary-500" />
-              Pickup Date (min. 2 days advance)
+              Pickup Date (min. 1 day advance)
             </label>
             <Controller
               control={control}

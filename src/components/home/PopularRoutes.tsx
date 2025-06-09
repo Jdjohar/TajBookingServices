@@ -25,7 +25,7 @@ const PopularRoutes = () => {
  useEffect(() => {
   const fetchRoutes = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/routes');
+      const response = await axios.get('https://tajbookingservices-i051.onrender.com/api/routes');
       const allRoutes = response.data;
 
       // Shuffle the array

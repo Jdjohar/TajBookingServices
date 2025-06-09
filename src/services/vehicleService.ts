@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Vehicle } from '../types';
 
-const API_URL = 'http://localhost:5000/api/vehicles';
+const API_URL = 'https://tajbookingservices-i051.onrender.com/api/vehicles';
 
 
 const getAuthHeaders = () => {
